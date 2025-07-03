@@ -94,8 +94,9 @@ export function connectToDB() {
 		} finally {
 			// Ensures that the client will close when you finish/error
 			await client.close();
+			console.log("Closed connection to MongoDB");
 		}
 	}
-	run().catch(console.dir);
+	run();
 	return client;
 }
