@@ -8,27 +8,21 @@ import {
 } from "discord-interactions";
 import "dotenv/config";
 import express from "express";
+import { connectToDB } from "./db/db.js";
 import { getResult, getShuffledOptions } from "./game.js";
-import {
-	connectToDB,
-	DiscordRequest,
-	getRandomEmoji,
-	getTotalDebt,
-} from "./utils.js";
+import { DiscordRequest, getRandomEmoji, getTotalDebt } from "./utils.js";
 
 // Create an express app
 const app = express();
 // Get port, or default to 3000
 const PORT = process.env.PORT || 3000;
 
-// Store for in-progress games. In production, you'd want to use a DB
 const activeGames = {};
 
 // Initialize database connection
-let DB;
-(async () => {
-	DB = await connectToDB();
-})();
+const DB = connectToDB();
+
+console.log(DB);
 
 /**
  * Interactions endpoint URL where Discord will send HTTP requests
@@ -117,6 +111,7 @@ app.post(
 			}
 
 			if (name === "totaldebt") {
+				console.log("REQUEST: ", req);
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 					data: {

@@ -1,5 +1,7 @@
+import { getDB } from "./db";
+
 // TODO
-export async function getTotalOwed(discordId) {
+export async function getTotalOwed(DB, discordId) {
 	const db = getDB();
 	const collection = db.collection("debts");
 

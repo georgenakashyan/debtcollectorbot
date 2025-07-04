@@ -1,5 +1,4 @@
 import "dotenv/config";
-import { MongoClient, ServerApiVersion } from "mongodb";
 
 export async function DiscordRequest(endpoint, options) {
 	// append endpoint to root API URL
@@ -65,38 +64,4 @@ export function capitalize(str) {
 
 export function getTotalDebt() {
 	return 1200.0;
-}
-
-export function connectToDB() {
-	const uri = process.env.MONGODB_URI;
-
-	const client = new MongoClient(uri, {
-		serverApi: {
-			version: ServerApiVersion.v1,
-			strict: true,
-			deprecationErrors: true,
-			useNewUrlParser: true,
-			useUnifiedTopology: true,
-			ssl: true,
-		},
-	});
-
-	async function run() {
-		try {
-			console.log("Connecting to MongoDB...");
-			// Connect the client to the server	(optional starting in v4.7)
-			await client.connect();
-			// Send a ping to confirm a successful connection
-			await client.db("debtcollector").command({ ping: 1 });
-			console.log("Successfully connected to MongoDB!");
-		} catch (e) {
-			console.error("Error Connecting to MongoDB: ", e);
-		} finally {
-			// Ensures that the client will close when you finish/error
-			await client.close();
-			console.log("Closed connection to MongoDB");
-		}
-	}
-	run();
-	return client;
 }
