@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 const activeGames = {};
 
 // Initialize database connection
-const DB = connectToDB();
+const DB = await connectToDB();
 
 console.log(DB);
 
