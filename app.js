@@ -22,8 +22,6 @@ const activeGames = {};
 // Initialize database connection
 const DB = await connectToDB();
 
-console.log(DB);
-
 /**
  * Interactions endpoint URL where Discord will send HTTP requests
  * Parse request body and verifies incoming requests using discord-interactions package
@@ -110,7 +108,7 @@ app.post(
 				});
 			}
 
-			if (name === "totaldebt") {
+			if (name === "totalowed") {
 				console.log("REQUEST: ", req);
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -120,6 +118,30 @@ app.post(
 							{
 								type: MessageComponentTypes.TEXT_DISPLAY,
 								content: `Total Debt Remaining: ${getTotalDebt()}`,
+							},
+						],
+					},
+				});
+			}
+
+			if (name === "totaldebt") {
+				console.log("REQUEST: ", req.body);
+
+				// Interaction context
+				const context = req.body.context;
+				// User ID is in user field for (G)DMs, and member for servers
+				const userId =
+					context === 0 ? req.body.member.user.id : req.body.user.id;
+				// User's object choice
+
+				return res.send({
+					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+					data: {
+						flags: InteractionResponseFlags.IS_COMPONENTS_V2,
+						components: [
+							{
+								type: MessageComponentTypes.TEXT_DISPLAY,
+								content: `Total Debt Remaining for ${userId}: ${getTotalDebt()}`,
 							},
 						],
 					},

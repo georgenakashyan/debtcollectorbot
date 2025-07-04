@@ -44,14 +44,27 @@ const CHALLENGE_COMMAND = {
 	contexts: [0, 2],
 };
 
-const TOTAL_DEBT_COMMAND = {
-	name: "totaldebt",
-	description: "Total Debt Remaining",
+const TOTAL_OWED_COMMAND = {
+	name: "totalowed",
+	description: "Total You Are Owed by Others",
 	type: 1,
 	integration_types: [0, 1],
 	contexts: [0, 1, 2],
 };
 
-const ALL_COMMANDS = [TEST_COMMAND, CHALLENGE_COMMAND, TOTAL_DEBT_COMMAND];
+const TOTAL_DEBT_COMMAND = {
+	name: "totaldebt",
+	description: "Total Debt You Owe to Others",
+	type: 1,
+	integration_types: [0, 1],
+	contexts: [0, 1, 2],
+};
+
+const ALL_COMMANDS = [
+	TEST_COMMAND,
+	CHALLENGE_COMMAND,
+	TOTAL_OWED_COMMAND,
+	TOTAL_DEBT_COMMAND,
+];
 
 InstallGlobalCommands(process.env.APP_ID, ALL_COMMANDS);
