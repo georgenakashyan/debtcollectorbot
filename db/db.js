@@ -10,7 +10,7 @@ export async function connectToDB() {
 	if (!client) {
 		try {
 			console.log("Connecting to MongoDB...");
-			const client = new MongoClient(uri, {
+			client = new MongoClient(uri, {
 				serverApi: {
 					version: ServerApiVersion.v1,
 					strict: true,
