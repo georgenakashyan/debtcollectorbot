@@ -104,28 +104,67 @@ export async function getTopDebtors(limit = 10) {
 	]);
 }
 
-// 3. Get all debts for a specific user (what they owe to others)
-export async function getUserDebts(userId) {
+/**
+ * Get all debts for a specific user (what they owe to others).
+ *
+ * @param {string} userId - The ID of the user whose debts are being retrieved.
+ * @returns {Promise<number>} - A promise that resolves to the total amount the user owes.
+ */
+export async function getUserDebts(userId, guildId) {
 	const db = getDB();
 
-	return await db.debts
-		.find({
-			debtorId: userId,
-			isSettled: false,
-		})
-		.sort({ createdAt: -1 });
+	const pipeline = [
+		{
+			$match: {
+				debtorId: userId,
+				guildId: guildId,
+				isSettled: false,
+			},
+		},
+		{
+			$group: {
+				_id: null,
+				totalAmount: { $sum: "$amount" },
+			},
+		},
+	];
+
+	const queryResults = await db.debts.aggregate(pipeline).toArray();
+
+	return queryResults[0]?.totalAmount || 0;
 }
 
-// 4. Get all credits for a specific user (what others owe to them)
-export async function getUserCredits(userId) {
+/**
+ * Get all debts for a specific user (what they owe to others).
+ *
+ * This function retrieves all unsettled debts where the specified user is the creditor.
+ * It aggregates the total amount owed to the user in the database.
+ *
+ * @param {string} userId - The ID of the user whose debts are being retrieved.
+ * @returns {Promise<number>} - A promise that resolves to the total amount the user is owed.
+ */
+export async function getUserCredits(userId, guildId) {
 	const db = getDB();
 
-	return await db.debts
-		.find({
-			creditorId: userId,
-			isSettled: false,
-		})
-		.sort({ createdAt: -1 });
+	const pipeline = [
+		{
+			$match: {
+				creditorId: userId,
+				guildId: guildId,
+				isSettled: false,
+			},
+		},
+		{
+			$group: {
+				_id: null,
+				totalAmount: { $sum: "$amount" },
+			},
+		},
+	];
+
+	const queryResults = await db.debts.aggregate(pipeline).toArray();
+
+	return queryResults[0]?.totalAmount || 0;
 }
 
 // 5. Get debt summary for a user (both debts and credits)
