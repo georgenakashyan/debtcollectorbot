@@ -1,5 +1,4 @@
 import {
-	ButtonStyleTypes,
 	InteractionResponseFlags,
 	InteractionResponseType,
 	InteractionType,
@@ -48,39 +47,13 @@ app.post(
 		if (type === InteractionType.APPLICATION_COMMAND) {
 			const { name } = data;
 
-			// "test" command
-			if (name === "test") {
-				// Send a message into the channel where command was triggered from
-				return res.send({
-					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-					data: {
-						flags: InteractionResponseFlags.IS_COMPONENTS_V2,
-						components: [
-							{
-								type: MessageComponentTypes.TEXT_DISPLAY,
-								// Fetches a random emoji to send from a helper function
-								content: `hello world ${getRandomEmoji()}`,
-							},
-						],
-					},
-				});
-			}
-
-			// "challenge" command
-			if (name === "challenge" && id) {
-				// Interaction context
+			if (name === "totaldebt") {
 				const context = req.body.context;
-				// User ID is in user field for (G)DMs, and member for servers
 				const userId =
 					context === 0 ? req.body.member.user.id : req.body.user.id;
-				// User's object choice
-				const objectName = req.body.data.options[0].value;
+				const guildId = req.body.guild_id;
 
-				// Create active game using message ID as the game ID
-				activeGames[id] = {
-					id: userId,
-					objectName,
-				};
+				const debt = await getUserDebts(userId, guildId);
 
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -89,20 +62,7 @@ app.post(
 						components: [
 							{
 								type: MessageComponentTypes.TEXT_DISPLAY,
-								// Fetches a random emoji to send from a helper function
-								content: `Rock papers scissors challenge from <@${userId}>`,
-							},
-							{
-								type: MessageComponentTypes.ACTION_ROW,
-								components: [
-									{
-										type: MessageComponentTypes.BUTTON,
-										// Append the game ID to use later on
-										custom_id: `accept_button_${req.body.id}`,
-										label: "Accept",
-										style: ButtonStyleTypes.PRIMARY,
-									},
-								],
+								content: `Total Debt Remaining for <@${userId}>: $${debt}`,
 							},
 						],
 					},
@@ -113,7 +73,11 @@ app.post(
 				const context = req.body.context;
 				const userId =
 					context === 0 ? req.body.member.user.id : req.body.user.id;
-				const credit = await getUserCredits(userId);
+				const guildId = req.body.guild_id;
+
+				const credit = await getUserCredits(userId, guildId);
+
+				console.log(req.body);
 
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -122,27 +86,7 @@ app.post(
 						components: [
 							{
 								type: MessageComponentTypes.TEXT_DISPLAY,
-								content: `Total Debt Remaining for <@${userId}>: ${credit}`,
-							},
-						],
-					},
-				});
-			}
-
-			if (name === "totaldebt") {
-				const context = req.body.context;
-				const userId =
-					context === 0 ? req.body.member.user.id : req.body.user.id;
-				const debt = await getUserDebts(userId);
-
-				return res.send({
-					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-					data: {
-						flags: InteractionResponseFlags.IS_COMPONENTS_V2,
-						components: [
-							{
-								type: MessageComponentTypes.TEXT_DISPLAY,
-								content: `Total Debt Remaining for <@${userId}>: ${debt}`,
+								content: `Total <@${userId}> is owed by others: $${credit}`,
 							},
 						],
 					},
