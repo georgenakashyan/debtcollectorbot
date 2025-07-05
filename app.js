@@ -16,9 +16,6 @@ import { DiscordRequest, getRandomEmoji } from "./utils.js";
 const app = express();
 // Get port, or default to 3000
 const PORT = process.env.PORT || 3000;
-
-const activeGames = {};
-
 // Initialize database connection
 const DB = await connectToDB();
 
@@ -76,8 +73,6 @@ app.post(
 				const guildId = req.body.guild_id;
 
 				const credit = await getUserCredits(userId, guildId);
-
-				console.log(req.body);
 
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
