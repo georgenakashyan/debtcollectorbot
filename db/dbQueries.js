@@ -1,4 +1,4 @@
-import { getDB } from "./db";
+import { getDB } from "./db.js";
 
 // TODO
 export async function getTotalOwed(DB, discordId) {
