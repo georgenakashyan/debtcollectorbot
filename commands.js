@@ -44,17 +44,17 @@ const CHALLENGE_COMMAND = {
 	contexts: [0, 2],
 };
 
-const TOTAL_OWED_COMMAND = {
-	name: "totalowed",
-	description: "Total you are owed by others",
+const TOTAL_DEBT_COMMAND = {
+	name: "totaldebt",
+	description: "Total debt you owe to others",
 	type: 1,
 	integration_types: [0, 1],
 	contexts: [0, 1, 2],
 };
 
-const TOTAL_DEBT_COMMAND = {
-	name: "totaldebt",
-	description: "Total debt you owe to others",
+const TOTAL_OWED_COMMAND = {
+	name: "totalowed",
+	description: "Total you are owed by others",
 	type: 1,
 	integration_types: [0, 1],
 	contexts: [0, 1, 2],
