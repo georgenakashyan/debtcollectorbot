@@ -9,8 +9,9 @@ import {
 import "dotenv/config";
 import express from "express";
 import { connectToDB } from "./db/db.js";
+import { getUserCredits, getUserDebts } from "./db/dbQueries.js";
 import { getResult, getShuffledOptions } from "./game.js";
-import { DiscordRequest, getRandomEmoji, getTotalDebt } from "./utils.js";
+import { DiscordRequest, getRandomEmoji } from "./utils.js";
 
 // Create an express app
 const app = express();
@@ -109,7 +110,11 @@ app.post(
 			}
 
 			if (name === "totalowed") {
-				console.log("REQUEST: ", req);
+				const context = req.body.context;
+				const userId =
+					context === 0 ? req.body.member.user.id : req.body.user.id;
+				const credit = await getUserCredits(userId);
+
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 					data: {
@@ -117,7 +122,7 @@ app.post(
 						components: [
 							{
 								type: MessageComponentTypes.TEXT_DISPLAY,
-								content: `Total Debt Remaining: ${getTotalDebt()}`,
+								content: `Total Debt Remaining for <@${userId}>: ${credit}`,
 							},
 						],
 					},
@@ -125,14 +130,10 @@ app.post(
 			}
 
 			if (name === "totaldebt") {
-				console.log("REQUEST: ", req.body);
-
-				// Interaction context
 				const context = req.body.context;
-				// User ID is in user field for (G)DMs, and member for servers
 				const userId =
 					context === 0 ? req.body.member.user.id : req.body.user.id;
-				// User's object choice
+				const debt = await getUserDebts(userId);
 
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -141,7 +142,7 @@ app.post(
 						components: [
 							{
 								type: MessageComponentTypes.TEXT_DISPLAY,
-								content: `Total Debt Remaining for ${userId}: ${getTotalDebt()}`,
+								content: `Total Debt Remaining for <@${userId}>: ${debt}`,
 							},
 						],
 					},
