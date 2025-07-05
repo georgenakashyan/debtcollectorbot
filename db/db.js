@@ -28,7 +28,8 @@ export async function connectToDB() {
 		}
 	}
 	if (!db) {
-		db = client.db("DebtCollector");
+		db = client.db("debtcollector");
+		db.debts = db.collection("debts");
 	}
 	return db;
 }
