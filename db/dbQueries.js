@@ -19,44 +19,6 @@ export const indexes = [
 ];
 
 // TODO
-export async function getTotalOwed(discordId) {
-	const db = getDB();
-	const collection = db.collection("debts");
-
-	// Your database operations
-	const result = await collection
-		.find({ creditorId: "226710459766669312", isSettled: false })
-		.sort({ createdAt: -1 })
-		.toArray();
-	// Handle the result
-	return result;
-}
-
-// TODO
-export async function getAllDebtors(discordId) {
-	const db = getDB();
-	const collection = db.collection("debts");
-
-	// Your database operations
-	const result = await collection.find({}).toArray();
-	// Handle the result
-	return result;
-}
-
-// TODO
-export async function getAllCreditors(discordId) {
-	const db = getDB();
-	const collection = db.collection("debts");
-
-	// Your database operations
-	const result = await collection.find({}).toArray();
-	// Handle the result
-	return result;
-}
-
-//##################################################################################
-
-// 1. Get total amount user A owes to user B
 export async function getTotalDebtBetweenUsers(debtorId, creditorId) {
 	const db = getDB();
 
@@ -78,8 +40,7 @@ export async function getTotalDebtBetweenUsers(debtorId, creditorId) {
 	]);
 	return result[0] || { totalAmount: 0, debtCount: 0 };
 }
-
-// 2. Get who owes the most money overall (top debtors)
+// TODO
 export async function getTopDebtors(limit = 10) {
 	const db = getDB();
 
@@ -105,7 +66,7 @@ export async function getTopDebtors(limit = 10) {
 }
 
 /**
- * Get all debts for a specific user (what they owe to others).
+ * Get all unsettled debts for a specific user (what they owe to others).
  *
  * @param {string} userId - The ID of the user whose debts are being retrieved.
  * @returns {Promise<number>} - A promise that resolves to the total amount the user owes.
@@ -135,10 +96,7 @@ export async function getUserDebts(userId, guildId) {
 }
 
 /**
- * Get all debts for a specific user (what they owe to others).
- *
- * This function retrieves all unsettled debts where the specified user is the creditor.
- * It aggregates the total amount owed to the user in the database.
+ * Get all unsettled credits for a specific user (what others owe to them).
  *
  * @param {string} userId - The ID of the user whose debts are being retrieved.
  * @returns {Promise<number>} - A promise that resolves to the total amount the user is owed.
