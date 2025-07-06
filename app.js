@@ -9,6 +9,7 @@ import "dotenv/config";
 import express from "express";
 import { connectToDB } from "./db/db.js";
 import { getUserCredits, getUserDebts } from "./db/dbQueries.js";
+import { pluralize } from "./utils.js";
 
 // Create an express app
 const app = express();
@@ -41,14 +42,13 @@ app.post(
 		 */
 		if (type === InteractionType.APPLICATION_COMMAND) {
 			const { name } = data;
+			const context = req.body.context;
+			const userId =
+				context === 0 ? req.body.member.user.id : req.body.user.id;
+			const guildId = req.body.guild_id;
 
 			if (name === "totaldebt") {
-				const context = req.body.context;
-				const userId =
-					context === 0 ? req.body.member.user.id : req.body.user.id;
-				const guildId = req.body.guild_id;
-
-				const debt = await getUserDebts(userId, guildId);
+				const debt = await getUserDebts(guildId, userId);
 
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -57,7 +57,11 @@ app.post(
 						components: [
 							{
 								type: MessageComponentTypes.TEXT_DISPLAY,
-								content: `Total Debt Remaining for <@${userId}>: $${debt}`,
+								content: `<@${userId}> owes $${
+									debt.totalAmount
+								} in total to others from ${
+									debt.debtCount
+								} ${pluralize("transaction", debt.debtCount)}`,
 							},
 						],
 					},
@@ -65,12 +69,7 @@ app.post(
 			}
 
 			if (name === "totalowed") {
-				const context = req.body.context;
-				const userId =
-					context === 0 ? req.body.member.user.id : req.body.user.id;
-				const guildId = req.body.guild_id;
-
-				const credit = await getUserCredits(userId, guildId);
+				const credit = await getUserCredits(guildId, userId);
 
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -79,7 +78,43 @@ app.post(
 						components: [
 							{
 								type: MessageComponentTypes.TEXT_DISPLAY,
-								content: `Total <@${userId}> is owed by others: $${credit}`,
+								content: `<@${userId}> is owed $${
+									credit.totalAmount
+								} in total by others from ${
+									credit.debtCount
+								} ${pluralize(
+									"transaction",
+									credit.debtCount
+								)}`,
+							},
+						],
+					},
+				});
+			}
+
+			// todo
+			if (name === "owetome") {
+				const debtorId = req.body.data.options[0].value;
+
+				const credit = await getTotalDebtFromSomeone(
+					guildId,
+					userId,
+					debtorId
+				);
+
+				return res.send({
+					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+					data: {
+						flags: InteractionResponseFlags.IS_COMPONENTS_V2,
+						components: [
+							{
+								type: MessageComponentTypes.TEXT_DISPLAY,
+								content: `<@${debtorId}> owes <@${userId}> $${
+									credit.totalAmount
+								} from ${credit.debtCount} ${pluralize(
+									"transaction",
+									credit.debtCount
+								)}`,
 							},
 						],
 					},

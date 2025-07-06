@@ -19,12 +19,13 @@ export const indexes = [
 ];
 
 // TODO
-export async function getTotalDebtBetweenUsers(debtorId, creditorId) {
+export async function getTotalDebtFromSomeone(guildId, debtorId, creditorId) {
 	const db = getDB();
 
 	const result = await db.debts.aggregate([
 		{
 			$match: {
+				guildId: guildId,
 				debtorId: debtorId,
 				creditorId: creditorId,
 				isSettled: false,
@@ -40,13 +41,20 @@ export async function getTotalDebtBetweenUsers(debtorId, creditorId) {
 	]);
 	return result[0] || { totalAmount: 0, debtCount: 0 };
 }
-// TODO
-export async function getTopDebtors(limit = 10) {
+
+/**
+ * Get the top debtors for a guild.
+ *
+ * @param {string} guildId - The guild ID.
+ * @param {number} limit - The number of debtors to return.
+ * @returns {Object} An object containing the total debt, debt count, and creditors.
+ */
+export async function getTopDebtors(guildId, limit = 10) {
 	const db = getDB();
 
-	return await db.debts.aggregate([
+	const pipeline = [
 		{
-			$match: { isSettled: false },
+			$match: { guildId: guildId, isSettled: false },
 		},
 		{
 			$group: {
@@ -62,18 +70,22 @@ export async function getTopDebtors(limit = 10) {
 		{
 			$limit: limit,
 		},
-	]);
+	];
+
+	const result = await db.debts.aggregate(pipeline).toArray();
+
+	return result[0] || { totalDebt: 0, debtCount: 0, creditors: [] };
 }
 
 /**
  * Get all unsettled debts for a specific user (what they owe to others).
  *
+ * @param {string} guildId - The guild ID in which the debt exists.
  * @param {string} userId - The ID of the user whose debts are being retrieved.
- * @returns {Promise<number>} - A promise that resolves to the total amount the user owes.
+ * @returns {Array} An array of debt objects.
  */
-export async function getUserDebts(userId, guildId) {
+export async function getUserDebts(guildId, userId) {
 	const db = getDB();
-
 	const pipeline = [
 		{
 			$match: {
@@ -86,22 +98,23 @@ export async function getUserDebts(userId, guildId) {
 			$group: {
 				_id: null,
 				totalAmount: { $sum: "$amount" },
+				debtCount: { $sum: 1 },
 			},
 		},
 	];
 
 	const queryResults = await db.debts.aggregate(pipeline).toArray();
-
-	return queryResults[0]?.totalAmount || 0;
+	return queryResults[0] || { totalAmount: 0, debtCount: 0 };
 }
 
 /**
  * Get all unsettled credits for a specific user (what others owe to them).
  *
+ * @param {string} guildId - The guild ID in which the debt exists.
  * @param {string} userId - The ID of the user whose debts are being retrieved.
- * @returns {Promise<number>} - A promise that resolves to the total amount the user is owed.
+ * @returns {Array} An array of debt objects.
  */
-export async function getUserCredits(userId, guildId) {
+export async function getUserCredits(guildId, userId) {
 	const db = getDB();
 
 	const pipeline = [
@@ -116,23 +129,26 @@ export async function getUserCredits(userId, guildId) {
 			$group: {
 				_id: null,
 				totalAmount: { $sum: "$amount" },
+				debtCount: { $sum: 1 },
 			},
 		},
 	];
 
 	const queryResults = await db.debts.aggregate(pipeline).toArray();
 
-	return queryResults[0]?.totalAmount || 0;
+	return queryResults[0] || { totalAmount: 0, debtCount: 0 };
 }
 
 // 5. Get debt summary for a user (both debts and credits)
-export async function getUserDebtSummary(userId) {
+// TODO
+export async function getUserDebtSummary(guildId, userId) {
 	const db = getDB();
 
 	const summary = await db.debts.aggregate([
 		{
 			$match: {
 				$or: [{ debtorId: userId }, { creditorId: userId }],
+				guildId: guildId,
 				isSettled: false,
 			},
 		},
@@ -156,13 +172,15 @@ export async function getUserDebtSummary(userId) {
 }
 
 // 6. Settle a debt (mark as paid)
-export async function settleDebt(debtId, settlementMethod = null) {
+// TODO
+export async function settleDebt(guildId, debtId, settlementMethod = null) {
 	const db = getDB();
 
 	return await db.debts.updateOne(
 		{ _id: debtId },
 		{
 			$set: {
+				guildId: guildId,
 				isSettled: true,
 				settledAt: new Date(),
 				"metadata.settlementMethod": settlementMethod,
@@ -172,6 +190,7 @@ export async function settleDebt(debtId, settlementMethod = null) {
 }
 
 // 7. Get guild debt leaderboard
+// TODO
 export async function getGuildDebtLeaderboard(guildId, limit = 10) {
 	const db = getDB();
 
