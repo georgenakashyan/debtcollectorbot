@@ -158,6 +158,15 @@ app.post(
 
 			if (name === "owed") {
 				const debtorId = req.body.data.options[0].value;
+				if (userId === debtorId) {
+					return res.send({
+						type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+						data: {
+							content: "You cannot owe yourself money!",
+							flags: 64,
+						},
+					});
+				}
 				const debt = await getTotalDebtFromSomeone(userId, debtorId);
 
 				return res.send({
