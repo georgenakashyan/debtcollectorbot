@@ -26,13 +26,12 @@ export const indexes = [
  * @param {number} debtorId - The ID of the debtor.
  * @returns {Object} An object containing the total debt and debt count.
  */
-export async function getTotalDebtFromSomeone(guildId, creditorId, debtorId) {
+export async function getTotalDebtFromSomeone(creditorId, debtorId) {
 	const db = getDB();
 
 	const pipeline = [
 		{
 			$match: {
-				guildId: guildId,
 				creditorId: creditorId,
 				debtorId: debtorId,
 				isSettled: false,
@@ -81,7 +80,7 @@ export async function getTopDebtors(guildId, limit = 10) {
 	];
 
 	const result = await db.debts.aggregate(pipeline).toArray();
-	return result || { totalAmount: 0, debtCount: 0, creditors: [] };
+	return result || [];
 }
 
 /**
@@ -91,15 +90,16 @@ export async function getTopDebtors(guildId, limit = 10) {
  * @param {string} userId - The ID of the user whose debts are being retrieved.
  * @returns {Array} An array of debt objects.
  */
-export async function getUserDebts(guildId, userId) {
+export async function getUserDebts(guildId = null, userId) {
 	const db = getDB();
+	const match = { debtorId: userId, isSettled: false };
+	if (guildId) {
+		match.guildId = guildId;
+	}
+
 	const pipeline = [
 		{
-			$match: {
-				debtorId: userId,
-				guildId: guildId,
-				isSettled: false,
-			},
+			$match: match,
 		},
 		{
 			$group: {
@@ -111,6 +111,7 @@ export async function getUserDebts(guildId, userId) {
 	];
 
 	const results = await db.debts.aggregate(pipeline).toArray();
+
 	return results[0] || { totalAmount: 0, debtCount: 0 };
 }
 
@@ -124,13 +125,14 @@ export async function getUserDebts(guildId, userId) {
 export async function getUserCredits(guildId, userId) {
 	const db = getDB();
 
+	const match = { creditorId: userId, isSettled: false };
+	if (guildId) {
+		match.guildId = guildId;
+	}
+
 	const pipeline = [
 		{
-			$match: {
-				creditorId: userId,
-				guildId: guildId,
-				isSettled: false,
-			},
+			$match: match,
 		},
 		{
 			$group: {
