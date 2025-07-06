@@ -200,8 +200,7 @@ app.post(
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 					data: {
 						content: leaderboard,
-						// Make it ephemeral if you want only the command user to see it
-						flags: 64,
+						flags: 64, // Make it ephemeral (value of 64) if you want only the command user to see it
 					},
 				});
 			}
