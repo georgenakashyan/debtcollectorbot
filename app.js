@@ -52,7 +52,7 @@ app.post(
 				context === 0 ? req.body.member.user.id : req.body.user.id;
 			const guildId = req.body.guild_id;
 
-			if (name === "totaldebt") {
+			if (name === "total-debt") {
 				const debt = await getUserDebts(guildId, userId);
 
 				return res.send({
@@ -78,7 +78,7 @@ app.post(
 				});
 			}
 
-			if (name === "totalowed") {
+			if (name === "total-owed") {
 				const credit = await getUserCredits(guildId, userId);
 
 				return res.send({
@@ -104,7 +104,7 @@ app.post(
 				});
 			}
 
-			if (name === "owetome") {
+			if (name === "owed") {
 				const debtorId = req.body.data.options[0].value;
 				const debt = await getTotalDebtFromSomeone(
 					guildId,
@@ -135,7 +135,7 @@ app.post(
 				});
 			}
 
-			if (name === "topdebtors") {
+			if (name === "top-debtors") {
 				const limit = 10;
 				const debtors = await getTopDebtors(guildId, limit);
 

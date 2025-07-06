@@ -1,33 +1,8 @@
 import "dotenv/config";
-import { getRPSChoices } from "./game.js";
-import { capitalize, InstallGlobalCommands } from "./utils.js";
-
-// Get the game choices from game.js
-function createCommandChoices() {
-	const choices = getRPSChoices();
-	const commandChoices = [];
-
-	for (let choice of choices) {
-		commandChoices.push({
-			name: capitalize(choice),
-			value: choice.toLowerCase(),
-		});
-	}
-
-	return commandChoices;
-}
-
-// Simple test command
-const TEST_COMMAND = {
-	name: "test",
-	description: "Basic command",
-	type: 1,
-	integration_types: [0, 1],
-	contexts: [0, 1, 2],
-};
+import { InstallGlobalCommands } from "./utils.js";
 
 const TOTAL_DEBT_COMMAND = {
-	name: "totaldebt",
+	name: "total-debt",
 	description: "Total debt you owe to others in the server",
 	type: 1,
 	integration_types: [0, 1],
@@ -35,7 +10,7 @@ const TOTAL_DEBT_COMMAND = {
 };
 
 const TOTAL_OWED_COMMAND = {
-	name: "totalowed",
+	name: "total-owed",
 	description: "Total you are owed by others in the server",
 	type: 1,
 	integration_types: [0, 1],
@@ -43,7 +18,7 @@ const TOTAL_OWED_COMMAND = {
 };
 
 const OWE_TO_ME_COMMAND = {
-	name: "owetome",
+	name: "owed",
 	description: "Check how much someone owes you",
 	options: [
 		{
@@ -59,7 +34,7 @@ const OWE_TO_ME_COMMAND = {
 };
 
 const TOP_DEBTORS_COMMAND = {
-	name: "topdebtors",
+	name: "top-debtors",
 	description: "Leaderboard of top debtors in the server",
 	type: 1,
 	integration_types: [0, 1],
@@ -67,7 +42,6 @@ const TOP_DEBTORS_COMMAND = {
 };
 
 const ALL_COMMANDS = [
-	TEST_COMMAND,
 	TOTAL_DEBT_COMMAND,
 	TOTAL_OWED_COMMAND,
 	OWE_TO_ME_COMMAND,
