@@ -10,7 +10,7 @@
 	},
 	"scripts": {
 		"start": "node ./src/app.js",
-		"register": "node ./commands/commands.js",
+		"register": "node ./src/commands/commands.js",
 		"dev": "nodemon ./src/app.js",
 		"test": "jest"
 	},
