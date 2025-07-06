@@ -9,11 +9,12 @@ import "dotenv/config";
 import express from "express";
 import { connectToDB } from "./db/db.js";
 import {
+	getTopDebtors,
 	getTotalDebtFromSomeone,
 	getUserCredits,
 	getUserDebts,
 } from "./db/dbQueries.js";
-import { pluralize } from "./utils.js";
+import { leaderboardEmoji, leaderboardText, pluralize } from "./utils.js";
 
 // Create an express app
 const app = express();
@@ -130,6 +131,77 @@ app.post(
 								}`,
 							},
 						],
+					},
+				});
+			}
+
+			if (name === "topdebtors") {
+				const limit = 10;
+				const debtors = await getTopDebtors(guildId, limit);
+
+				// If no debtors found
+				if (!debtors || debtors.length === 0) {
+					return res.send({
+						type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+						data: {
+							content:
+								"🎉 **No outstanding debts found!**\n\nEveryone in this server is debt-free! 🤝",
+							flags: MessageFlags.EPHEMERAL,
+						},
+					});
+				}
+
+				// Build the leaderboard
+				let leaderboard = "💸 **SERVER DEBT LEADERBOARD** 💸\n";
+				leaderboard += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+				debtors.forEach((debtor, index) => {
+					const position = index + 1;
+					let positionEmoji = leaderboardEmoji(position);
+					let positionText = leaderboardText(position);
+
+					// Format the amount
+					const amount = debtor.totalAmount;
+					const transactionText = `${debtor.debtCount} ${pluralize(
+						"transaction",
+						debtor.debtCount
+					)}`;
+
+					// Different styling for top 3 vs others
+					if (position <= 3) {
+						leaderboard += `${positionEmoji} ${positionText}\n`;
+						leaderboard += `└─ <@${debtor._id}>\n`;
+						leaderboard += `└─ **$${amount}** *(${transactionText})*\n\n`;
+					} else {
+						leaderboard += `${positionEmoji} ${positionText} • <@${debtor._id}>\n`;
+						leaderboard += `└─ **$${amount}** *(${transactionText})*\n\n`;
+					}
+				});
+
+				// Add footer with total stats
+				const totalDebt = debtors.reduce(
+					(sum, debtor) => sum + debtor.totalAmount,
+					0
+				);
+				const totalTransactions = debtors.reduce(
+					(sum, debtor) => sum + debtor.debtCount,
+					0
+				);
+
+				leaderboard += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+				leaderboard += `📊 **Total Server Debt:** $${totalDebt.toFixed(
+					2
+				)}\n`;
+				leaderboard += `📈 **Total Transactions:** ${totalTransactions}\n`;
+				leaderboard += `👥 **Debtors Shown:** ${debtors.length}${
+					debtors.length === limit ? ` (limit: ${limit})` : ""
+				}`;
+
+				return res.send({
+					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+					data: {
+						content: leaderboard,
+						// Make it ephemeral if you want only the command user to see it
+						flags: 64,
 					},
 				});
 			}

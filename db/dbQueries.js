@@ -58,11 +58,8 @@ export async function getTotalDebtFromSomeone(guildId, creditorId, debtorId) {
  * @param {number} limit - The number of debtors to return.
  * @returns {Object} An object containing the total debt, debt count, and creditors.
  */
-
-// TODO DO THIS IT NOT DONE YET ARGGGGGGGGGGGG
 export async function getTopDebtors(guildId, limit = 10) {
 	const db = getDB();
-
 	const pipeline = [
 		{
 			$match: { guildId: guildId, isSettled: false },
@@ -70,7 +67,7 @@ export async function getTopDebtors(guildId, limit = 10) {
 		{
 			$group: {
 				_id: "$debtorId",
-				totalDebt: { $sum: "$amount" },
+				totalAmount: { $sum: "$amount" },
 				debtCount: { $sum: 1 },
 				creditors: { $addToSet: "$creditorId" },
 			},
@@ -84,8 +81,7 @@ export async function getTopDebtors(guildId, limit = 10) {
 	];
 
 	const result = await db.debts.aggregate(pipeline).toArray();
-
-	return result[0] || { totalDebt: 0, debtCount: 0, creditors: [] };
+	return result || { totalAmount: 0, debtCount: 0, creditors: [] };
 }
 
 /**
