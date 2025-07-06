@@ -53,7 +53,7 @@ app.post(
 			const guildId = req.body.guild_id;
 
 			if (name === "total-debt") {
-				const debt = await getUserDebts(guildId, userId);
+				const debt = await getUserDebts(null, userId);
 
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -64,7 +64,33 @@ app.post(
 								type: MessageComponentTypes.TEXT_DISPLAY,
 								content: `<@${userId}> owes others $${
 									debt.totalAmount
-								} in total ${
+								} ${
+									debt.debtCount > 0
+										? pluralize(
+												`from ${debt.debtCount} transaction`,
+												debt.debtCount
+										  )
+										: ""
+								}`,
+							},
+						],
+					},
+				});
+			}
+
+			if (name === "total-debt-in-server") {
+				const debt = await getUserDebts(guildId, userId);
+
+				return res.send({
+					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+					data: {
+						flags: InteractionResponseFlags.IS_COMPONENTS_V2,
+						components: [
+							{
+								type: MessageComponentTypes.TEXT_DISPLAY,
+								content: `<@${userId}> owes in this server $${
+									debt.totalAmount
+								} ${
 									debt.debtCount > 0
 										? pluralize(
 												`from ${debt.debtCount} transaction`,
@@ -79,6 +105,32 @@ app.post(
 			}
 
 			if (name === "total-owed") {
+				const credit = await getUserCredits(null, userId);
+
+				return res.send({
+					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+					data: {
+						flags: InteractionResponseFlags.IS_COMPONENTS_V2,
+						components: [
+							{
+								type: MessageComponentTypes.TEXT_DISPLAY,
+								content: `<@${userId}> is owed $${
+									credit.totalAmount
+								} ${
+									credit.debtCount > 0
+										? pluralize(
+												`from ${credit.debtCount} transaction`,
+												credit.debtCount
+										  )
+										: ""
+								}`,
+							},
+						],
+					},
+				});
+			}
+
+			if (name === "total-owed-in-server") {
 				const credit = await getUserCredits(guildId, userId);
 
 				return res.send({
@@ -90,7 +142,7 @@ app.post(
 								type: MessageComponentTypes.TEXT_DISPLAY,
 								content: `<@${userId}> is owed $${
 									credit.totalAmount
-								} in total by others ${
+								} in this server ${
 									credit.debtCount > 0
 										? pluralize(
 												`from ${credit.debtCount} transaction`,
@@ -106,11 +158,7 @@ app.post(
 
 			if (name === "owed") {
 				const debtorId = req.body.data.options[0].value;
-				const debt = await getTotalDebtFromSomeone(
-					guildId,
-					userId,
-					debtorId
-				);
+				const debt = await getTotalDebtFromSomeone(userId, debtorId);
 
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
