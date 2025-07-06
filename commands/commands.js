@@ -1,9 +1,17 @@
 import "dotenv/config";
-import { InstallGlobalCommands } from "./utils.js";
+import { InstallGlobalCommands } from "../utils.js";
 
 const TOTAL_DEBT_COMMAND = {
 	name: "total-debt",
-	description: "Total debt you owe to others in the server",
+	description: "The total debt you owe to others",
+	type: 1,
+	integration_types: [0, 1],
+	contexts: [0, 1, 2],
+};
+
+const TOTAL_SERVER_DEBT_COMMAND = {
+	name: "total-debt-in-server",
+	description: "The total debt you owe to others in this server",
 	type: 1,
 	integration_types: [0, 1],
 	contexts: [0, 1, 2],
@@ -11,7 +19,15 @@ const TOTAL_DEBT_COMMAND = {
 
 const TOTAL_OWED_COMMAND = {
 	name: "total-owed",
-	description: "Total you are owed by others in the server",
+	description: "The total you are owed by others",
+	type: 1,
+	integration_types: [0, 1],
+	contexts: [0, 1, 2],
+};
+
+const TOTAL_SERVER_OWED_COMMAND = {
+	name: "total-owed-in-server",
+	description: "The total you are owed by others in this server",
 	type: 1,
 	integration_types: [0, 1],
 	contexts: [0, 1, 2],
@@ -35,7 +51,7 @@ const OWE_TO_ME_COMMAND = {
 
 const TOP_DEBTORS_COMMAND = {
 	name: "top-debtors",
-	description: "Leaderboard of top debtors in the server",
+	description: "Leaderboard of top debtors in this server",
 	type: 1,
 	integration_types: [0, 1],
 	contexts: [0, 1, 2],
@@ -43,7 +59,9 @@ const TOP_DEBTORS_COMMAND = {
 
 const ALL_COMMANDS = [
 	TOTAL_DEBT_COMMAND,
+	TOTAL_SERVER_DEBT_COMMAND,
 	TOTAL_OWED_COMMAND,
+	TOTAL_SERVER_OWED_COMMAND,
 	OWE_TO_ME_COMMAND,
 	TOP_DEBTORS_COMMAND,
 ];
