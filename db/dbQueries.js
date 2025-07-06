@@ -18,16 +18,23 @@ export const indexes = [
 	{ isSettled: 1 },
 ];
 
-// TODO
-export async function getTotalDebtFromSomeone(guildId, debtorId, creditorId) {
+/**
+ * Get the total debt owed by a user to another user.
+ *
+ * @param {string} guildId - The guild ID.
+ * @param {number} creditorId - The ID of the creditor.
+ * @param {number} debtorId - The ID of the debtor.
+ * @returns {Object} An object containing the total debt and debt count.
+ */
+export async function getTotalDebtFromSomeone(guildId, creditorId, debtorId) {
 	const db = getDB();
 
-	const result = await db.debts.aggregate([
+	const pipeline = [
 		{
 			$match: {
 				guildId: guildId,
-				debtorId: debtorId,
 				creditorId: creditorId,
+				debtorId: debtorId,
 				isSettled: false,
 			},
 		},
@@ -38,7 +45,9 @@ export async function getTotalDebtFromSomeone(guildId, debtorId, creditorId) {
 				debtCount: { $sum: 1 },
 			},
 		},
-	]);
+	];
+
+	const result = await db.debts.aggregate(pipeline).toArray();
 	return result[0] || { totalAmount: 0, debtCount: 0 };
 }
 
@@ -49,6 +58,8 @@ export async function getTotalDebtFromSomeone(guildId, debtorId, creditorId) {
  * @param {number} limit - The number of debtors to return.
  * @returns {Object} An object containing the total debt, debt count, and creditors.
  */
+
+// TODO DO THIS IT NOT DONE YET ARGGGGGGGGGGGG
 export async function getTopDebtors(guildId, limit = 10) {
 	const db = getDB();
 
@@ -103,8 +114,8 @@ export async function getUserDebts(guildId, userId) {
 		},
 	];
 
-	const queryResults = await db.debts.aggregate(pipeline).toArray();
-	return queryResults[0] || { totalAmount: 0, debtCount: 0 };
+	const results = await db.debts.aggregate(pipeline).toArray();
+	return results[0] || { totalAmount: 0, debtCount: 0 };
 }
 
 /**
@@ -134,9 +145,9 @@ export async function getUserCredits(guildId, userId) {
 		},
 	];
 
-	const queryResults = await db.debts.aggregate(pipeline).toArray();
+	const results = await db.debts.aggregate(pipeline).toArray();
 
-	return queryResults[0] || { totalAmount: 0, debtCount: 0 };
+	return results[0] || { totalAmount: 0, debtCount: 0 };
 }
 
 // 5. Get debt summary for a user (both debts and credits)

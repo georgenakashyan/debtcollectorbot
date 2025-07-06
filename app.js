@@ -8,7 +8,11 @@ import {
 import "dotenv/config";
 import express from "express";
 import { connectToDB } from "./db/db.js";
-import { getUserCredits, getUserDebts } from "./db/dbQueries.js";
+import {
+	getTotalDebtFromSomeone,
+	getUserCredits,
+	getUserDebts,
+} from "./db/dbQueries.js";
 import { pluralize } from "./utils.js";
 
 // Create an express app
@@ -57,11 +61,16 @@ app.post(
 						components: [
 							{
 								type: MessageComponentTypes.TEXT_DISPLAY,
-								content: `<@${userId}> owes $${
+								content: `<@${userId}> owes others $${
 									debt.totalAmount
-								} in total to others from ${
-									debt.debtCount
-								} ${pluralize("transaction", debt.debtCount)}`,
+								} in total ${
+									debt.debtCount > 0
+										? pluralize(
+												`from ${debt.debtCount} transaction`,
+												debt.debtCount
+										  )
+										: ""
+								}`,
 							},
 						],
 					},
@@ -80,23 +89,23 @@ app.post(
 								type: MessageComponentTypes.TEXT_DISPLAY,
 								content: `<@${userId}> is owed $${
 									credit.totalAmount
-								} in total by others from ${
-									credit.debtCount
-								} ${pluralize(
-									"transaction",
-									credit.debtCount
-								)}`,
+								} in total by others ${
+									credit.debtCount > 0
+										? pluralize(
+												`from ${credit.debtCount} transaction`,
+												credit.debtCount
+										  )
+										: ""
+								}`,
 							},
 						],
 					},
 				});
 			}
 
-			// todo
 			if (name === "owetome") {
 				const debtorId = req.body.data.options[0].value;
-
-				const credit = await getTotalDebtFromSomeone(
+				const debt = await getTotalDebtFromSomeone(
 					guildId,
 					userId,
 					debtorId
@@ -110,11 +119,15 @@ app.post(
 							{
 								type: MessageComponentTypes.TEXT_DISPLAY,
 								content: `<@${debtorId}> owes <@${userId}> $${
-									credit.totalAmount
-								} from ${credit.debtCount} ${pluralize(
-									"transaction",
-									credit.debtCount
-								)}`,
+									debt.totalAmount
+								} ${
+									debt.debtCount > 0
+										? pluralize(
+												`from ${debt.debtCount} transaction`,
+												debt.debtCount
+										  )
+										: ""
+								}`,
 							},
 						],
 					},
