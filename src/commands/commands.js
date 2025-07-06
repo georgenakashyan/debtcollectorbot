@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { InstallGlobalCommands } from "../utils.js";
+import { InstallGlobalCommands } from "../utils/utils.js";
 
 const TOTAL_DEBT_COMMAND = {
 	name: "total-debt",

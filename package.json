@@ -9,9 +9,9 @@
 		"node": ">=18.x"
 	},
 	"scripts": {
-		"start": "node app.js",
+		"start": "node ./src/app.js",
 		"register": "node ./commands/commands.js",
-		"dev": "nodemon app.js",
+		"dev": "nodemon ./src/app.js",
 		"test": "jest"
 	},
 	"dependencies": {

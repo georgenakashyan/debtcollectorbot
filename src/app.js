@@ -14,7 +14,7 @@ import {
 	getUserCredits,
 	getUserDebts,
 } from "./db/dbQueries.js";
-import { leaderboardEmoji, leaderboardText, pluralize } from "./utils.js";
+import { leaderboardEmoji, leaderboardText, pluralize } from "./utils/utils.js";
 
 // Create an express app
 const app = express();
@@ -88,9 +88,9 @@ app.post(
 						components: [
 							{
 								type: MessageComponentTypes.TEXT_DISPLAY,
-								content: `<@${userId}> owes in this server $${
+								content: `<@${userId}> owes $${
 									debt.totalAmount
-								} ${
+								} in this server ${
 									debt.debtCount > 0
 										? pluralize(
 												`from ${debt.debtCount} transaction`,
