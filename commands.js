@@ -26,27 +26,9 @@ const TEST_COMMAND = {
 	contexts: [0, 1, 2],
 };
 
-// Command containing options
-const CHALLENGE_COMMAND = {
-	name: "challenge",
-	description: "Challenge to a match of rock paper scissors",
-	options: [
-		{
-			type: 3,
-			name: "object",
-			description: "Pick your object",
-			required: true,
-			choices: createCommandChoices(),
-		},
-	],
-	type: 1,
-	integration_types: [0, 1],
-	contexts: [0, 2],
-};
-
 const TOTAL_DEBT_COMMAND = {
 	name: "totaldebt",
-	description: "Total debt you owe to others",
+	description: "Total debt you owe to others in the server",
 	type: 1,
 	integration_types: [0, 1],
 	contexts: [0, 1, 2],
@@ -54,7 +36,31 @@ const TOTAL_DEBT_COMMAND = {
 
 const TOTAL_OWED_COMMAND = {
 	name: "totalowed",
-	description: "Total you are owed by others",
+	description: "Total you are owed by others in the server",
+	type: 1,
+	integration_types: [0, 1],
+	contexts: [0, 1, 2],
+};
+
+const OWE_TO_ME_COMMAND = {
+	name: "owetome",
+	description: "Check how much someone owes you",
+	options: [
+		{
+			type: 6,
+			name: "debtor",
+			description: "Who owes you?",
+			required: true,
+		},
+	],
+	type: 1,
+	integration_types: [0, 1],
+	contexts: [0, 1, 2],
+};
+
+const TOP_DEBTORS_COMMAND = {
+	name: "topdebtors",
+	description: "Leaderboard of top debtors in the server",
 	type: 1,
 	integration_types: [0, 1],
 	contexts: [0, 1, 2],
@@ -62,9 +68,10 @@ const TOTAL_OWED_COMMAND = {
 
 const ALL_COMMANDS = [
 	TEST_COMMAND,
-	CHALLENGE_COMMAND,
-	TOTAL_OWED_COMMAND,
 	TOTAL_DEBT_COMMAND,
+	TOTAL_OWED_COMMAND,
+	OWE_TO_ME_COMMAND,
+	TOP_DEBTORS_COMMAND,
 ];
 
 InstallGlobalCommands(process.env.APP_ID, ALL_COMMANDS);
