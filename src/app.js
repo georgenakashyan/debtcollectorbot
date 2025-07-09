@@ -15,6 +15,7 @@ import {
 	getUserDebts,
 } from "./db/dbQueries.js";
 import { leaderboardEmoji, leaderboardText, pluralize } from "./utils/utils.js";
+import { addDebt } from "./db/dbUpdates.js";
 
 // Create an express app
 const app = express();
@@ -203,7 +204,7 @@ app.post(
 						data: {
 							content:
 								"🎉 **No outstanding debts found!**\n\nEveryone in this server is debt-free! 🤝",
-							flags: MessageFlags.EPHEMERAL,
+							//flags: 64,
 						},
 					});
 				}
@@ -257,7 +258,21 @@ app.post(
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 					data: {
 						content: leaderboard,
-						flags: 64, // Make it ephemeral (value of 64) if you want only the command user to see it
+						//flags: 64, // Make it ephemeral (value of 64) if you want only the command user to see it
+					},
+				});
+			}
+
+			if (name === "add-debt") {
+				const debtorId = req.body.data.options[0].value;
+				const amount = req.body.data.options[1].value;
+				const description = req.body.data.options[2].value;
+				await addDebt(guildId, userId, debtorId, amount, description);
+				return res.send({
+					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+					data: {
+						content: `<@${debtorId}> now owes <@${userId}> $${amount} for "${description}"`,
+						//flags: 64,
 					},
 				});
 			}
