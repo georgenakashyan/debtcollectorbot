@@ -15,7 +15,12 @@ import {
 	getUserDebts,
 } from "./db/dbQueries.js";
 import { addDebt } from "./db/dbUpdates.js";
-import { leaderboardEmoji, leaderboardText, pluralize } from "./utils/utils.js";
+import {
+	formatNumber,
+	leaderboardEmoji,
+	leaderboardText,
+	pluralize,
+} from "./utils/utils.js";
 
 // Create an express app
 const app = express();
@@ -268,7 +273,7 @@ app.post(
 
 			if (name === "add-debt") {
 				const debtorId = req.body.data.options[0].value;
-				const amount = req.body.data.options[1].value;
+				const amount = formatNumber(req.body.data.options[1].value);
 				const description = req.body.data.options[2].value;
 				await addDebt(guildId, userId, debtorId, amount, description);
 				return res.send({

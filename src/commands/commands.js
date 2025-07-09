@@ -69,7 +69,7 @@ const ADD_DEBT_COMMAND = {
 			required: true,
 		},
 		{
-			type: 4,
+			type: 10,
 			name: "amount",
 			description: "How much?",
 			required: true,

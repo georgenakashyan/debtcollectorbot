@@ -72,3 +72,9 @@ export function leaderboardText(placement) {
 		placement - 1
 	);
 }
+
+export function formatNumber(num) {
+	return Math.abs(
+		Math.min(Math.max(Math.round(num * 100) / 100, -100000), 100000)
+	);
+}
