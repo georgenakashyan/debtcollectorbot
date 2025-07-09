@@ -14,8 +14,8 @@ import {
 	getUserCredits,
 	getUserDebts,
 } from "./db/dbQueries.js";
-import { leaderboardEmoji, leaderboardText, pluralize } from "./utils/utils.js";
 import { addDebt } from "./db/dbUpdates.js";
+import { leaderboardEmoji, leaderboardText, pluralize } from "./utils/utils.js";
 
 // Create an express app
 const app = express();
@@ -212,6 +212,9 @@ app.post(
 				// Build the leaderboard
 				let leaderboard = "💸 **SERVER DEBT LEADERBOARD** 💸\n";
 				leaderboard += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+				debtors.sort((a, b) => {
+					return b.totalAmount - a.totalAmount;
+				});
 				debtors.forEach((debtor, index) => {
 					const position = index + 1;
 					let positionEmoji = leaderboardEmoji(position);
