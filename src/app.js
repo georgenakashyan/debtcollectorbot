@@ -84,7 +84,7 @@ app.post(
 				});
 			}
 
-			if (name === "total-debt-in-server") {
+			if (name === "debt") {
 				const debt = await getUserDebts(guildId, userId);
 
 				return res.send({
@@ -136,7 +136,7 @@ app.post(
 				});
 			}
 
-			if (name === "total-owed-in-server") {
+			if (name === "owed") {
 				const credit = await getUserCredits(guildId, userId);
 
 				return res.send({
@@ -162,7 +162,7 @@ app.post(
 				});
 			}
 
-			if (name === "owed") {
+			if (name === "owes-me") {
 				const debtorId = req.body.data.options[0].value;
 				if (userId === debtorId) {
 					return res.send({
@@ -196,6 +196,10 @@ app.post(
 						],
 					},
 				});
+			}
+
+			// TODO
+			if (name === "transactions") {
 			}
 
 			if (name === "top-debtors") {
@@ -266,7 +270,7 @@ app.post(
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 					data: {
 						content: leaderboard,
-						//flags: 64, // Make it ephemeral (value of 64) if you want only the command user to see it
+						//flags: 64,
 					},
 				});
 			}
@@ -283,6 +287,31 @@ app.post(
 						//flags: 64,
 					},
 				});
+			}
+
+			// TODO
+			if (name === "remove-debt") {
+				const debtorId = req.body.data.options[0].value;
+				const amount = formatNumber(req.body.data.options[1].value);
+				const description = req.body.data.options[2].value;
+				await removeDebt(
+					guildId,
+					userId,
+					debtorId,
+					amount,
+					description
+				);
+				return res.send({
+					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+					data: {
+						content: `<@${debtorId}> no longer owes <@${userId}> $${amount} for "${description}"`,
+						//flags: 64,
+					},
+				});
+			}
+
+			// TODO
+			if (name === "paid") {
 			}
 
 			console.error(`unknown command: ${name}`);
