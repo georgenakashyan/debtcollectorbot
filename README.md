@@ -1,4 +1,6 @@
 # **DebtCollector Bot for Discord**
+[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/212yg.svg)](https://uptime.betterstack.com/?utm_source=status_badge) 
+
 
 DebtCollector Bot is designed to help you manage and track debts within your Discord community. With intuitive commands, you can easily add, view, and settle debts, ensuring everyone stays accountable. Whether you're settling IOUs or keeping tabs on group expenses, DebtCollector Bot simplifies the process.
 
