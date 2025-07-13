@@ -1,0 +1,51 @@
+name: Build and Deploy to DigitalOcean
+on:
+    push:
+        branches: [main]
+jobs:
+    build-and-deploy:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+            - name: Deploy to DigitalOcean
+              uses: appleboy/ssh-action@v1.0.0
+              with:
+                  host: ${{ secrets.DO_DROPLET_IP }}
+                  username: ${{ secrets.DO_USERNAME }}
+                  key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
+                  script: |
+                      echo "Starting deployment..."
+
+                      # Stop the service first
+                      sudo systemctl stop debtcollectorbot
+
+                      # Navigate to project directory
+                      cd /root/debtcollectorbot
+
+                      # Pull latest changes
+                      echo "Pulling latest changes..."
+                      git pull origin main
+
+                      # Install dependencies
+                      echo "Installing dependencies..."
+                      #npm install
+
+                      # Start the service
+                      echo "Starting debtcollectorbot service..."
+                      sudo systemctl start debtcollectorbot
+
+                      # Check if service started successfully
+                      sleep 5
+                      if sudo systemctl is-active --quiet debtcollectorbot; then
+                          echo "✅ DebtCollectorBot service started successfully"
+                      else
+                          echo "❌ Failed to start DebtCollectorBot service"
+                          sudo systemctl status debtcollectorbot
+                          exit 1
+                      fi
+
+                      echo "Deployment completed!"
