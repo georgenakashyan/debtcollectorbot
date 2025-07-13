@@ -14,7 +14,7 @@ import {
 	getUserCredits,
 	getUserDebts,
 } from "./db/dbQueries.js";
-import { addDebt } from "./db/dbUpdates.js";
+import { addTransaction } from "./db/dbUpdates.js";
 import {
 	formatNumber,
 	leaderboardEmoji,
@@ -279,7 +279,13 @@ app.post(
 				const debtorId = req.body.data.options[0].value;
 				const amount = formatNumber(req.body.data.options[1].value);
 				const description = req.body.data.options[2].value;
-				await addDebt(guildId, userId, debtorId, amount, description);
+				await addTransaction(
+					guildId,
+					userId,
+					debtorId,
+					amount,
+					description
+				);
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 					data: {

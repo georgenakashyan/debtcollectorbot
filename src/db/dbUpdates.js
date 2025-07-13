@@ -1,6 +1,6 @@
 import { getDB } from "./db.js";
 
-export const addDebt = async (
+export const addTransaction = async (
 	guildId,
 	userId,
 	debtorId,
@@ -18,4 +18,12 @@ export const addDebt = async (
 		isSettled: false,
 		currency: "USD",
 	});
+};
+
+export const removeTransaction = async (userId, transactionId) => {
+	const db = getDB();
+	await db.debts.findOneAndUpdate(
+		{ _id: transactionId, creditorId: userId },
+		{ $set: { isSettled: true } }
+	);
 };

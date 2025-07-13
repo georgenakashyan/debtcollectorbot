@@ -1,8 +1,8 @@
 {
-	"name": "discord-getting-started",
+	"name": "debt-collector-bot",
 	"private": true,
 	"version": "1.0.0",
-	"description": "Discord example app",
+	"description": "A Discord bot that can track you and your friends' debts to eachother.",
 	"main": "app.js",
 	"type": "module",
 	"engines": {
