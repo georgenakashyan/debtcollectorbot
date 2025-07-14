@@ -20,7 +20,7 @@ export const addTransaction = async (
 	});
 };
 
-export const removeTransaction = async (userId, transactionId) => {
+export const settleTransaction = async (userId, transactionId) => {
 	const db = getDB();
 	await db.debts.findOneAndUpdate(
 		{ _id: transactionId, creditorId: userId },

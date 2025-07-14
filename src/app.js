@@ -14,7 +14,7 @@ import {
 	getUserCredits,
 	getUserDebts,
 } from "./db/dbQueries.js";
-import { addTransaction } from "./db/dbUpdates.js";
+import { addTransaction, settleTransaction } from "./db/dbUpdates.js";
 import {
 	formatNumber,
 	leaderboardEmoji,
@@ -297,16 +297,8 @@ app.post(
 
 			// TODO
 			if (name === "remove-debt") {
-				const debtorId = req.body.data.options[0].value;
-				const amount = formatNumber(req.body.data.options[1].value);
-				const description = req.body.data.options[2].value;
-				await removeDebt(
-					guildId,
-					userId,
-					debtorId,
-					amount,
-					description
-				);
+				const transactionId = req.body.data.options[0].value;
+				await settleTransaction(userId, transactionId);
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 					data: {
