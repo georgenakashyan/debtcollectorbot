@@ -275,17 +275,21 @@ app.post(
 				const debtorId = req.body.data.options[0].value;
 				const amount = formatNumber(req.body.data.options[1].value);
 				const description = req.body.data.options[2].value;
+				const dueDate = req?.body?.data?.options[3]?.value || null;
 				await addTransaction(
 					guildId,
 					userId,
 					debtorId,
 					amount,
-					description
+					description,
+					dueDate
 				);
 				return res.send({
 					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 					data: {
-						content: `<@${debtorId}> now owes <@${userId}> $${amount} for "${description}"`,
+						content: `<@${debtorId}> now owes <@${userId}> $${amount} for "${description} ${
+							dueDate ? `due by ${dueDate}` : ""
+						}"`,
 						//flags: 64,
 					},
 				});
