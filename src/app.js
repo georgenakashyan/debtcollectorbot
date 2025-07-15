@@ -198,10 +198,6 @@ app.post(
 				});
 			}
 
-			// TODO
-			if (name === "transactions") {
-			}
-
 			if (name === "top-debtors") {
 				const limit = 10;
 				const debtors = await getTopDebtors(guildId, limit);
@@ -296,6 +292,27 @@ app.post(
 			}
 
 			// TODO
+			if (name === "transactions") {
+				const debtorId = req.body.options[0].value;
+				const transactions = await getAllTransactionsFromSomeone(
+					userId,
+					debtorId
+				);
+
+				if (transactions.length === 0) {
+					return res.send({
+						type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+						data: {
+							content: "🎉 You have no outstanding debts!",
+							flags: 64,
+						},
+					});
+				}
+
+				return res.send();
+			}
+
+			// TODO might not need this command if its built into transactions method. Tho it could be called from buttons but then it wont be in the interactions requests maybe?
 			if (name === "remove-debt") {
 				const transactionId = req.body.data.options[0].value;
 				await settleTransaction(userId, transactionId);
