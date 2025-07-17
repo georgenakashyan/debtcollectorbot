@@ -311,14 +311,16 @@ app.post(
 					});
 				}
 
-				let message = "";
+				let transactionMessages = [];
 				transactions.forEach((transaction) => {
-					message += `<@${transaction.debtorId}> owes <@${transaction.creditorId}> $${transaction.amount} for "${transaction.description}"\n`;
+					transactionMessages.push(
+						`<@${transaction.debtorId}> owes <@${transaction.creditorId}> $${transaction.amount} for "${transaction.description}"\n`
+					);
 				});
 
 				return res.send({
 					type: InteractionResponseType.IS_COMPONENTS_V2,
-					components: [
+					components: transactionMessages.map((message) => [
 						{
 							type: ComponentType.ACTION_ROW,
 							components: [
@@ -347,7 +349,7 @@ app.post(
 								},
 							],
 						},
-					],
+					]),
 				});
 			}
 
