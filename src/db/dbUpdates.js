@@ -5,8 +5,7 @@ export const addTransaction = async (
 	userId,
 	debtorId,
 	amount,
-	description,
-	dueDate
+	description
 ) => {
 	const db = getDB();
 	await db.debts.insertOne({
@@ -15,7 +14,6 @@ export const addTransaction = async (
 		amount: amount,
 		description: description,
 		guildId: guildId,
-		dueDate: dueDate ? new Date(dueDate) : null,
 		createdAt: Date.now(),
 		isSettled: false,
 		currency: "USD",

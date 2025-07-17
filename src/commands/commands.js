@@ -97,12 +97,6 @@ const ADD_DEBT_COMMAND = {
 			description: "What was the money for",
 			required: true,
 		},
-		{
-			type: 7,
-			name: "date",
-			description: "When is the money due by?",
-			required: false,
-		},
 	],
 	integration_types: [0, 1],
 	contexts: [0, 1, 2],
