@@ -148,7 +148,7 @@ export async function getUserCredits(guildId, userId) {
 	return results[0] || { totalAmount: 0, debtCount: 0 };
 }
 
-export async function getAllTransactionsFromSomeone(creditorId, debtorId) {
+export async function getAllUnsettledTransactionsFromSomeone(creditorId, debtorId) {
 	const db = getDB();
 	const results = await db.debts
 		.find({ creditorId: creditorId, debtorId: debtorId, isSettled: false })

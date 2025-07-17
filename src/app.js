@@ -9,6 +9,7 @@ import "dotenv/config";
 import express from "express";
 import { connectToDB } from "./db/db.js";
 import {
+	getAllUnsettledTransactionsFromSomeone,
 	getTopDebtors,
 	getTotalDebtFromSomeone,
 	getUserCredits,
@@ -294,10 +295,11 @@ app.post(
 			// TODO
 			if (name === "transactions") {
 				const debtorId = req.body.options[0].value;
-				const transactions = await getAllTransactionsFromSomeone(
-					userId,
-					debtorId
-				);
+				const transactions =
+					await getAllUnsettledTransactionsFromSomeone(
+						userId,
+						debtorId
+					);
 
 				if (transactions.length === 0) {
 					return res.send({
@@ -309,7 +311,44 @@ app.post(
 					});
 				}
 
-				return res.send();
+				let message = "";
+				transactions.forEach((transaction) => {
+					message += `<@${transaction.debtorId}> owes <@${transaction.creditorId}> $${transaction.amount} for "${transaction.description}"\n`;
+				});
+
+				return res.send({
+					type: InteractionResponseType.IS_COMPONENTS_V2,
+					components: [
+						{
+							type: ComponentType.ACTION_ROW,
+							components: [
+								{
+									type: ComponentType.TEXT_DISPLAY,
+									content: {
+										content: message,
+									},
+								},
+								{
+									type: ComponentType.ACTION_ROW,
+									components: [
+										{
+											type: ComponentType.BUTTON,
+											customId: "delete",
+											label: "Delete",
+											style: ComponentStyle.DANGER,
+										},
+										{
+											type: ComponentType.BUTTON,
+											customId: "change-amount",
+											label: "Partial Payment",
+											style: ComponentStyle.PRIMARY,
+										},
+									],
+								},
+							],
+						},
+					],
+				});
 			}
 
 			// TODO might not need this command if its built into transactions method. Tho it could be called from buttons but then it wont be in the interactions requests maybe?

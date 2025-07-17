@@ -49,23 +49,6 @@ const OWE_TO_ME_COMMAND = {
 	contexts: [0, 1, 2],
 };
 
-// TODO
-const TRANSACTIONS_COMMAND = {
-	name: "transactions",
-	description: "Show and manage all transactions with a user",
-	options: [
-		{
-			type: 6,
-			name: "debtor",
-			description: "Who owes you?",
-			required: true,
-		},
-	],
-	type: 1,
-	integration_types: [0, 1],
-	contexts: [0, 1, 2],
-};
-
 const TOP_DEBTORS_COMMAND = {
 	name: "top-debtors",
 	description: "Leaderboard of top debtors in this server",
@@ -103,6 +86,23 @@ const ADD_DEBT_COMMAND = {
 };
 
 // TODO
+const TRANSACTIONS_COMMAND = {
+	name: "transactions",
+	description: "Show and manage all transactions with a user",
+	options: [
+		{
+			type: 6,
+			name: "debtor",
+			description: "Who owes you?",
+			required: true,
+		},
+	],
+	type: 1,
+	integration_types: [0, 1],
+	contexts: [0, 1, 2],
+};
+
+// TODO might remove
 const REMOVE_DEBT_COMMAND = {
 	name: "remove-debt",
 	description: "Mark a debt someone owes you as paid off",
@@ -119,7 +119,7 @@ const REMOVE_DEBT_COMMAND = {
 	contexts: [0, 1, 2],
 };
 
-// TODO
+// TODO might remove
 const PARTIALLY_PAY_DEBT_COMMAND = {
 	name: "paid",
 	description: "Subtract a payment from a debt someone owes you",
