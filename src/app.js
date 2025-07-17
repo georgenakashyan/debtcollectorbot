@@ -5,7 +5,7 @@ import {
 	MessageComponentTypes,
 	verifyKeyMiddleware,
 } from "discord-interactions";
-import { ButtonStyle, ComponentType } from "discord.js";
+import { ButtonStyle, ComponentType, TextInputStyle } from "discord.js";
 import "dotenv/config";
 import express from "express";
 import { connectToDB } from "./db/db.js";
@@ -16,7 +16,7 @@ import {
 	getUserCredits,
 	getUserDebts,
 } from "./db/dbQueries.js";
-import { addTransaction, settleTransaction } from "./db/dbUpdates.js";
+import { addTransaction } from "./db/dbUpdates.js";
 import {
 	formatNumber,
 	leaderboardEmoji,
@@ -312,50 +312,116 @@ app.post(
 						});
 					}
 
-					// Create components for each transaction
-					const transactionComponents = transactions.map(
-						(transaction, index) => ({
+					// Pagination setup
+					const itemsPerPage = 3; // Show 3 transactions per page
+					const totalPages = Math.ceil(
+						transactions.length / itemsPerPage
+					);
+					const currentPage = 1; // Start at page 1
+
+					// Get transactions for current page
+					const startIndex = (currentPage - 1) * itemsPerPage;
+					const endIndex = startIndex + itemsPerPage;
+					const pageTransactions = transactions.slice(
+						startIndex,
+						endIndex
+					);
+
+					// Create components array - each transaction gets its own action row
+					const components = [];
+
+					// Add transaction action rows
+					pageTransactions.forEach((transaction, index) => {
+						const actualIndex = startIndex + index;
+						components.push({
 							type: ComponentType.ActionRow,
 							components: [
-								// TODO uncommenting this doesnt work I DONT KNOW WHYYYY
-								/* {
-									type: ComponentType.TextDisplay,
-									content: `>>> <@${transaction.debtorId}> owes <@${transaction.creditorId}> ${transaction.amount} for "${transaction.description}"\n`,
-								}, */
 								{
 									type: ComponentType.Button,
 									custom_id: `delete_${
-										transaction.id || index
+										transaction.id || actualIndex
 									}`,
-									label: `Delete: ${transaction.amount}`,
+									label: `Delete #${actualIndex + 1}`,
 									style: ButtonStyle.Danger,
 								},
 								{
 									type: ComponentType.Button,
 									custom_id: `partial_${
-										transaction.id || index
+										transaction.id || actualIndex
 									}`,
-									label: "Partial Payment",
+									label: `Partial Payment #${
+										actualIndex + 1
+									}`,
 									style: ButtonStyle.Primary,
 								},
 							],
-						})
-					);
+						});
+					});
 
-					let contentMessage = `**Debts <@${debtorId}> owes <@${userId}>:**`;
+					// Add pagination controls if needed
+					if (totalPages > 1) {
+						const paginationButtons = [];
+
+						if (currentPage > 1) {
+							paginationButtons.push({
+								type: ComponentType.Button,
+								custom_id: `transactions_page_${
+									currentPage - 1
+								}_${debtorId}`,
+								label: "◀ Previous",
+								style: ButtonStyle.Secondary,
+							});
+						}
+
+						paginationButtons.push({
+							type: ComponentType.Button,
+							custom_id: `transactions_refresh_${currentPage}_${debtorId}`,
+							label: `Page ${currentPage}/${totalPages}`,
+							style: ButtonStyle.Secondary,
+							disabled: true,
+						});
+
+						if (currentPage < totalPages) {
+							paginationButtons.push({
+								type: ComponentType.Button,
+								custom_id: `transactions_page_${
+									currentPage + 1
+								}_${debtorId}`,
+								label: "Next ▶",
+								style: ButtonStyle.Secondary,
+							});
+						}
+
+						components.push({
+							type: ComponentType.ActionRow,
+							components: paginationButtons,
+						});
+					}
+
+					// Create content with transaction details
+					let content = `**Debts <@${debtorId}> owes <@${userId}>:** (${transactions.length} total)\n\n`;
+
+					pageTransactions.forEach((transaction, index) => {
+						const actualIndex = startIndex + index;
+						content += `**Transaction #${actualIndex + 1}**\n`;
+						content += `💰 Amount: ${transaction.amount}\n`;
+						content += `📝 Description: "${transaction.description}"\n`;
+						content += `🆔 ID: ${
+							transaction.id || actualIndex
+						}\n\n`;
+					});
 
 					return res.json({
 						type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 						data: {
-							content: contentMessage,
-							components: transactionComponents.slice(0, 5), // Discord allows max 5 action rows
+							content: content,
+							components: components,
 						},
 					});
 				} catch (e) {
 					console.error("Error in transactions handler:", e);
-					// Always send a response, even on error
 					return res.json({
-						type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+						type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 						data: {
 							content:
 								"An error occurred while fetching transactions.",
@@ -365,17 +431,134 @@ app.post(
 				}
 			}
 
-			// TODO might not need this command if its built into transactions method. Tho it could be called from buttons but then it wont be in the interactions requests maybe?
-			if (name === "remove-debt") {
-				const transactionId = req.body.data.options[0].value;
-				await settleTransaction(userId, transactionId);
-				return res.send({
-					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-					data: {
-						content: `<@${debtorId}> no longer owes <@${userId}> $${amount} for "${description}"`,
-						//flags: 64,
-					},
-				});
+			// Handler for pagination button interactions
+			if (req.body.data.custom_id?.startsWith("transactions_page_")) {
+				try {
+					const [, , pageNum, debtorId] =
+						req.body.data.custom_id.split("_");
+					const currentPage = parseInt(pageNum);
+
+					const transactions =
+						await getAllUnsettledTransactionsFromSomeone(
+							userId,
+							debtorId
+						);
+
+					const itemsPerPage = 3;
+					const totalPages = Math.ceil(
+						transactions.length / itemsPerPage
+					);
+
+					// Get transactions for current page
+					const startIndex = (currentPage - 1) * itemsPerPage;
+					const endIndex = startIndex + itemsPerPage;
+					const pageTransactions = transactions.slice(
+						startIndex,
+						endIndex
+					);
+
+					// Create components array
+					const components = [];
+
+					// Add transaction action rows
+					pageTransactions.forEach((transaction, index) => {
+						const actualIndex = startIndex + index;
+						components.push({
+							type: ComponentType.ActionRow,
+							components: [
+								{
+									type: ComponentType.Button,
+									custom_id: `delete_${
+										transaction.id || actualIndex
+									}`,
+									label: `Delete #${actualIndex + 1}`,
+									style: ButtonStyle.Danger,
+								},
+								{
+									type: ComponentType.Button,
+									custom_id: `partial_${
+										transaction.id || actualIndex
+									}`,
+									label: `Partial Payment #${
+										actualIndex + 1
+									}`,
+									style: ButtonStyle.Primary,
+								},
+							],
+						});
+					});
+
+					// Add pagination controls
+					if (totalPages > 1) {
+						const paginationButtons = [];
+
+						if (currentPage > 1) {
+							paginationButtons.push({
+								type: ComponentType.Button,
+								custom_id: `transactions_page_${
+									currentPage - 1
+								}_${debtorId}`,
+								label: "◀ Previous",
+								style: ButtonStyle.Secondary,
+							});
+						}
+
+						paginationButtons.push({
+							type: ComponentType.Button,
+							custom_id: `transactions_refresh_${currentPage}_${debtorId}`,
+							label: `Page ${currentPage}/${totalPages}`,
+							style: ButtonStyle.Secondary,
+							disabled: true,
+						});
+
+						if (currentPage < totalPages) {
+							paginationButtons.push({
+								type: ComponentType.Button,
+								custom_id: `transactions_page_${
+									currentPage + 1
+								}_${debtorId}`,
+								label: "Next ▶",
+								style: ButtonStyle.Secondary,
+							});
+						}
+
+						components.push({
+							type: ComponentType.ActionRow,
+							components: paginationButtons,
+						});
+					}
+
+					// Create content
+					let content = `**Debts <@${debtorId}> owes <@${userId}>:** (${transactions.length} total)\n\n`;
+
+					pageTransactions.forEach((transaction, index) => {
+						const actualIndex = startIndex + index;
+						content += `**Transaction #${actualIndex + 1}**\n`;
+						content += `💰 Amount: ${transaction.amount}\n`;
+						content += `📝 Description: "${transaction.description}"\n`;
+						content += `🆔 ID: ${
+							transaction.id || actualIndex
+						}\n\n`;
+					});
+
+					return res.json({
+						type: InteractionResponseType.UPDATE_MESSAGE,
+						data: {
+							content: content,
+							components: components,
+						},
+					});
+				} catch (e) {
+					console.error("Error in pagination handler:", e);
+					return res.json({
+						type: InteractionResponseType.UPDATE_MESSAGE,
+						data: {
+							content:
+								"An error occurred while updating the page.",
+							components: [],
+						},
+					});
+				}
 			}
 
 			// TODO
@@ -384,6 +567,53 @@ app.post(
 
 			console.error(`unknown command: ${name}`);
 			return res.status(400).json({ error: "unknown command" });
+		}
+
+		if (type === InteractionType.MESSAGE_COMPONENT) {
+			// Delete transaction handler
+			if (req.body.data.custom_id?.startsWith("delete_")) {
+				const transactionId = req.body.data.custom_id.split("_")[1];
+				console.log("Deleting transaction:", transactionId);
+				// Your delete logic here
+				// Then refresh the page or show success message
+				return res.json({
+					type: InteractionResponseType.UPDATE_MESSAGE,
+					data: {
+						// add more info into content
+						content: `Transaction id: ${transactionId} has been deleted`,
+						components: [],
+					},
+				});
+			}
+
+			// Partial payment handler
+			if (req.body.data.custom_id?.startsWith("partial_")) {
+				const transactionId = req.body.data.custom_id.split("_")[1];
+				console.log("Partial payment for transaction:", transactionId);
+				// Show a modal for entering the payment amount
+				// Or handle the partial payment logic
+				return res.json({
+					type: InteractionResponseType.MODAL,
+					data: {
+						title: "Partial Payment",
+						custom_id: transactionId,
+						components: [
+							{
+								type: ComponentType.ActionRow,
+								components: [
+									{
+										type: ComponentType.TextInput,
+										custom_id: "amount",
+										label: "Amount",
+										style: TextInputStyle.Short,
+										required: true,
+									},
+								],
+							},
+						],
+					},
+				});
+			}
 		}
 
 		console.error("unknown interaction type", type);
