@@ -5,6 +5,7 @@ import {
 	MessageComponentTypes,
 	verifyKeyMiddleware,
 } from "discord-interactions";
+import { ButtonStyle, ComponentType } from "discord.js";
 import "dotenv/config";
 import express from "express";
 import { connectToDB } from "./db/db.js";
@@ -292,65 +293,76 @@ app.post(
 				});
 			}
 
-			// TODO
 			if (name === "transactions") {
-				const debtorId = req.body.data.options[0].value;
-				const transactions =
-					await getAllUnsettledTransactionsFromSomeone(
-						userId,
-						debtorId
+				try {
+					const debtorId = req.body.data.options[0].value;
+					const transactions =
+						await getAllUnsettledTransactionsFromSomeone(
+							userId,
+							debtorId
+						);
+
+					if (transactions.length === 0) {
+						return res.json({
+							type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+							data: {
+								content: `<@${debtorId}> owes you nothing`,
+								flags: 64,
+							},
+						});
+					}
+
+					// Create components for each transaction
+					const transactionComponents = transactions.map(
+						(transaction, index) => ({
+							type: ComponentType.ActionRow,
+							components: [
+								// TODO uncommenting this doesnt work I DONT KNOW WHYYYY
+								/* {
+									type: ComponentType.TextDisplay,
+									content: `>>> <@${transaction.debtorId}> owes <@${transaction.creditorId}> ${transaction.amount} for "${transaction.description}"\n`,
+								}, */
+								{
+									type: ComponentType.Button,
+									custom_id: `delete_${
+										transaction.id || index
+									}`,
+									label: `Delete: ${transaction.amount}`,
+									style: ButtonStyle.Danger,
+								},
+								{
+									type: ComponentType.Button,
+									custom_id: `partial_${
+										transaction.id || index
+									}`,
+									label: "Partial Payment",
+									style: ButtonStyle.Primary,
+								},
+							],
+						})
 					);
 
-				if (transactions.length === 0) {
-					return res.send({
+					let contentMessage = `**Debts <@${debtorId}> owes <@${userId}>:**`;
+
+					return res.json({
 						type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 						data: {
-							content: "🎉 You have no outstanding debts!",
+							content: contentMessage,
+							components: transactionComponents.slice(0, 5), // Discord allows max 5 action rows
+						},
+					});
+				} catch (e) {
+					console.error("Error in transactions handler:", e);
+					// Always send a response, even on error
+					return res.json({
+						type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+						data: {
+							content:
+								"An error occurred while fetching transactions.",
 							flags: 64,
 						},
 					});
 				}
-
-				let transactionMessages = [];
-				transactions.forEach((transaction) => {
-					transactionMessages.push(
-						`<@${transaction.debtorId}> owes <@${transaction.creditorId}> $${transaction.amount} for "${transaction.description}"\n`
-					);
-				});
-
-				return res.send({
-					type: InteractionResponseType.IS_COMPONENTS_V2,
-					components: transactionMessages.map((message) => [
-						{
-							type: ComponentType.ACTION_ROW,
-							components: [
-								{
-									type: ComponentType.TEXT_DISPLAY,
-									content: {
-										content: message,
-									},
-								},
-								{
-									type: ComponentType.ACTION_ROW,
-									components: [
-										{
-											type: ComponentType.BUTTON,
-											customId: "delete",
-											label: "Delete",
-											style: ComponentStyle.DANGER,
-										},
-										{
-											type: ComponentType.BUTTON,
-											customId: "change-amount",
-											label: "Partial Payment",
-											style: ComponentStyle.PRIMARY,
-										},
-									],
-								},
-							],
-						},
-					]),
-				});
 			}
 
 			// TODO might not need this command if its built into transactions method. Tho it could be called from buttons but then it wont be in the interactions requests maybe?
