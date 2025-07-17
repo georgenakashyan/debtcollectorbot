@@ -294,7 +294,7 @@ app.post(
 
 			// TODO
 			if (name === "transactions") {
-				const debtorId = req.body.options[0].value;
+				const debtorId = req.body.data.options[0].value;
 				const transactions =
 					await getAllUnsettledTransactionsFromSomeone(
 						userId,
