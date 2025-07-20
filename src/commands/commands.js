@@ -49,6 +49,22 @@ const OWE_TO_ME_COMMAND = {
 	contexts: [0, 1, 2],
 };
 
+const I_OWE_TO_COMMAND = {
+	name: "i-owe",
+	description: "Check how much you owe someone",
+	options: [
+		{
+			type: 6,
+			name: "creditor",
+			description: "Who owes you?",
+			required: true,
+		},
+	],
+	type: 1,
+	integration_types: [0, 1],
+	contexts: [0, 1, 2],
+};
+
 const TOP_DEBTORS_COMMAND = {
 	name: "top-debtors",
 	description: "Leaderboard of top debtors in this server",
@@ -142,6 +158,7 @@ const ALL_COMMANDS = [
 	TOTAL_OWED_COMMAND,
 	TOTAL_SERVER_OWED_COMMAND,
 	OWE_TO_ME_COMMAND,
+	I_OWE_TO_COMMAND,
 	TRANSACTIONS_COMMAND,
 	TOP_DEBTORS_COMMAND,
 	ADD_DEBT_COMMAND,

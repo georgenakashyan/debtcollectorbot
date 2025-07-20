@@ -200,6 +200,42 @@ app.post(
 				});
 			}
 
+			if (name === "i-owe") {
+				const creditorId = req.body.data.options[0].value;
+				if (userId === creditorId) {
+					return res.send({
+						type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+						data: {
+							content: "You cannot owe yourself money!",
+							flags: 64,
+						},
+					});
+				}
+				const debt = await getTotalDebtFromSomeone(creditorId, userId);
+
+				return res.send({
+					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+					data: {
+						flags: InteractionResponseFlags.IS_COMPONENTS_V2,
+						components: [
+							{
+								type: MessageComponentTypes.TEXT_DISPLAY,
+								content: `<@${userId}> owes <@${creditorId}> $${
+									debt.totalAmount
+								} ${
+									debt.debtCount > 0
+										? pluralize(
+												`from ${debt.debtCount} transaction`,
+												debt.debtCount
+										  )
+										: ""
+								}`,
+							},
+						],
+					},
+				});
+			}
+
 			if (name === "top-debtors") {
 				const limit = 10;
 				const debtors = await getTopDebtors(guildId, limit);
