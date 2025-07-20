@@ -101,44 +101,9 @@ const ADD_DEBT_COMMAND = {
 	contexts: [0, 1, 2],
 };
 
-// TODO
 const TRANSACTIONS_COMMAND = {
 	name: "transactions",
 	description: "Show and manage all transactions with a user",
-	options: [
-		{
-			type: 6,
-			name: "debtor",
-			description: "Who owes you?",
-			required: true,
-		},
-	],
-	type: 1,
-	integration_types: [0, 1],
-	contexts: [0, 1, 2],
-};
-
-// TODO might remove
-const REMOVE_DEBT_COMMAND = {
-	name: "remove-debt",
-	description: "Mark a debt someone owes you as paid off",
-	options: [
-		{
-			type: 6,
-			name: "debtor",
-			description: "Who owes you?",
-			required: true,
-		},
-	],
-	type: 1,
-	integration_types: [0, 1],
-	contexts: [0, 1, 2],
-};
-
-// TODO might remove
-const PARTIALLY_PAY_DEBT_COMMAND = {
-	name: "paid",
-	description: "Subtract a payment from a debt someone owes you",
 	options: [
 		{
 			type: 6,
@@ -159,11 +124,9 @@ const ALL_COMMANDS = [
 	TOTAL_SERVER_OWED_COMMAND,
 	OWE_TO_ME_COMMAND,
 	I_OWE_TO_COMMAND,
-	TRANSACTIONS_COMMAND,
 	TOP_DEBTORS_COMMAND,
 	ADD_DEBT_COMMAND,
-	REMOVE_DEBT_COMMAND,
-	PARTIALLY_PAY_DEBT_COMMAND,
+	TRANSACTIONS_COMMAND,
 ];
 
 InstallGlobalCommands(process.env.APP_ID, ALL_COMMANDS);
