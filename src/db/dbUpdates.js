@@ -27,3 +27,15 @@ export const settleTransaction = async (userId, transactionId) => {
 		{ $set: { isSettled: true } }
 	);
 };
+
+export const partiallySettleTransaction = async (
+	userId,
+	transactionId,
+	amount
+) => {
+	const db = getDB();
+	await db.debts.findOneAndUpdate(
+		{ _id: transactionId, creditorId: userId },
+		{ $inc: { amount: -1 * amount } }
+	);
+};
