@@ -66,8 +66,7 @@ export function leaderboardEmoji(placement) {
 }
 
 export function leaderboardText(placement) {
-	if (placement > 3)
-		return `${placement}${getOrdinalSuffix(placement)} Place`;
+	if (placement > 3) return `${getOrdinalSuffix(placement)} Place`;
 	return ["**1st Place!**", "**2nd Place!**", "**3rd Place!**"].at(
 		placement - 1
 	);
