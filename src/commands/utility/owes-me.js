@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import { getTotalDebtFromSomeone } from "../../db/dbQueries.js";
 import { pluralize } from "../../utils/utils.js";
 
@@ -17,15 +17,16 @@ export default {
 		const debtorId = interaction.options.getUser("debtor");
 		const debt = await getTotalDebtFromSomeone(userId, debtorId);
 		// interaction.guild is the object representing the Guild in which the command was run
-		await interaction.reply(
-			`<@${debtorId}> owes <@${userId}> $${debt.totalAmount} ${
+		await interaction.reply({
+			content: `${debtorId} owes you $${debt.totalAmount} ${
 				debt.debtCount > 0
 					? pluralize(
 							`from ${debt.debtCount} transaction`,
 							debt.debtCount
 					  )
 					: ""
-			}`
-		);
+			}`,
+			flags: MessageFlags.Ephemeral,
+		});
 	},
 };
