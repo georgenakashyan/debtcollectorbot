@@ -10,7 +10,7 @@ export default {
 		const userId = interaction.user.id;
 		const guildId = interaction.guild.id;
 		const credit = await getUserCredits(guildId, userId);
-		// interaction.guild is the object representing the Guild in which the command was run
+
 		await interaction.reply(
 			`<@${userId}> is owed $${credit.totalAmount} in this server ${
 				credit.debtCount > 0
