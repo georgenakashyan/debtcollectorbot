@@ -1,3 +1,4 @@
+import { formatNumber } from "../utils/utils.js";
 import { getDB } from "./db.js";
 
 export const indexes = [
@@ -47,6 +48,7 @@ export async function getTotalDebtFromSomeone(creditorId, debtorId) {
 	];
 
 	const result = await db.debts.aggregate(pipeline).toArray();
+	if (result[0]) result[0].totalAmount = formatNumber(result[0].totalAmount);
 	return result[0] || { totalAmount: 0, debtCount: 0 };
 }
 
@@ -148,7 +150,10 @@ export async function getUserCredits(guildId, userId) {
 	return results[0] || { totalAmount: 0, debtCount: 0 };
 }
 
-export async function getAllUnsettledTransactionsFromSomeone(creditorId, debtorId) {
+export async function getAllUnsettledTransactionsFromSomeone(
+	creditorId,
+	debtorId
+) {
 	const db = getDB();
 	const results = await db.debts
 		.find({ creditorId: creditorId, debtorId: debtorId, isSettled: false })
