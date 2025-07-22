@@ -14,11 +14,19 @@ export default {
 		),
 	async execute(interaction) {
 		const userId = interaction.user.id;
-		const debtorId = interaction.options.getUser("debtor");
+		const debtorId = interaction.options.getUser("debtor").id;
+
+		if (userId === debtorId) {
+			return await interaction.reply({
+				content: "You can't owe yourself money!",
+				flags: MessageFlags.Ephemeral,
+			});
+		}
+
 		const debt = await getTotalDebtFromSomeone(userId, debtorId);
 
 		await interaction.reply({
-			content: `${debtorId} owes you $${debt.totalAmount} ${
+			content: `<@${debtorId}> owes you $${debt.totalAmount} ${
 				debt.debtCount > 0
 					? pluralize(
 							`from ${debt.debtCount} transaction`,

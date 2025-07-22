@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import { addTransaction } from "../../db/dbUpdates.js";
 import { formatNumber } from "../../utils/utils.js";
 
@@ -34,8 +34,10 @@ export default {
 		const description = interaction.options.getString("description");
 
 		if (userId === debtorId) {
-			await interaction.reply("You can't owe yourself money!");
-			return;
+			return await interaction.reply({
+				content: "You can't owe yourself money!",
+				flags: MessageFlags.Ephemeral,
+			});
 		}
 
 		await addTransaction(
