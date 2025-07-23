@@ -8,15 +8,6 @@ import "dotenv/config";
 import express from "express";
 import { connectToDB } from "./db/db.js";
 import { getAllUnsettledTransactionsFromSomeone } from "./db/dbQueries.js";
-import { addTransaction } from "./db/dbUpdates.js";
-import { formatNumber } from "./utils/utils.js";
-
-// Create an express app
-const app = express();
-// Get port, or default to 3000
-const PORT = process.env.PORT || 3000;
-// Initialize database connection
-const DB = await connectToDB();
 
 /**
  * Interactions endpoint URL where Discord will send HTTP requests

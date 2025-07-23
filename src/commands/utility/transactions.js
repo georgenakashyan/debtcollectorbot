@@ -1,5 +1,5 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
-import { getAllUnsettledTransactionsFromSomeone } from "../../db/dbQueries";
+import { getAllUnsettledTransactionsFromSomeone } from "../../db/dbQueries.js";
 
 export default {
 	data: new SlashCommandBuilder()
@@ -27,16 +27,16 @@ export default {
 			debtorId
 		);
 
-    if (transactions.length === 0) {
-      return await interaction.reply({
-        content: `<@${debtorId}> owes you nothing`,
-        flags: MessageFlags.Ephemeral,
-      });
-    }
+		if (transactions.length === 0) {
+			return await interaction.reply({
+				content: `<@${debtorId}> owes you nothing`,
+				flags: MessageFlags.Ephemeral,
+			});
+		}
 
-    await interaction.reply({
-      content: `<@${debtorId}> owes you ${transactions.length} transaction(s)`,
-      flags: MessageFlags.Ephemeral,
-    })
+		await interaction.reply({
+			content: `<@${debtorId}> owes you ${transactions.length} transaction(s)`,
+			flags: MessageFlags.Ephemeral,
+		});
 	},
 };
