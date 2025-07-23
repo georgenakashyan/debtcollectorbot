@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
 import { getTopDebtors } from "../../db/dbQueries.js";
-import { buildTopDebtorLeaderboard } from "../../utils/utils.js";
+import { buildTopDebtorLeaderboard } from "../../utils/buildTopDebtorLeaderboard.js";
 
 export default {
 	data: new SlashCommandBuilder()
