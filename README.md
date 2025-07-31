@@ -1,100 +1,160 @@
-# **DebtCollector Bot for Discord**
-[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/212yh.svg)](https://uptime.betterstack.com/?utm_source=status_badge) 
+# DebtCollector Bot
 
+[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/212yh.svg)](https://uptime.betterstack.com/?utm_source=status_badge)
 
-DebtCollector Bot is designed to help you manage and track debts within your Discord community. With intuitive commands, you can easily add, view, and settle debts, ensuring everyone stays accountable. Whether you're settling IOUs or keeping tabs on group expenses, DebtCollector Bot simplifies the process.
+A Discord bot that helps you track debts and IOUs within your Discord community. Keep tabs on who owes what, settle debts, and maintain accountability among friends and group members.
 
-## How to Use
+## Features
 
-You can either [invite DebtCollectorBot to your discord](https://discord.com/oauth2/authorize?client_id=1389366055314522182)
+- **Track Debts**: Record who owes money to whom with detailed descriptions
+- **View Balances**: Check individual and total debt amounts
+- **Settlement Tracking**: Mark debts as paid when settled
+- **Transaction History**: View complete transaction logs
+- **Leaderboards**: See top debtors and creditors in your server
 
-or
+## Quick Start
 
-Set up this project on your own (see section 'Running app locally').
+### Option 1: Invite the Bot (Recommended)
 
-## Running app locally
+[**Invite DebtCollector Bot to your Discord server**](https://discord.com/oauth2/authorize?client_id=1389366055314522182)
 
-Before you start, you'll need to install [NodeJS](https://nodejs.org/en/download/) and [create a Discord app](https://discord.com/developers/applications) with the proper permissions:
+Required permissions:
+- `applications.commands` - For slash commands
+- `bot` with "Send Messages" - For responses
 
--   `applications.commands`
--   `bot` (with Send Messages enabled)
+### Option 2: Self-Host
 
-Configuring the app is covered in detail in the [getting started guide](https://discord.com/developers/docs/getting-started).
+Requirements:
+- Node.js 18.x or higher
+- MongoDB database
+- Discord Bot Token
 
-### Setup project
+## Installation
 
-First clone the project:
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/DebtCollectorBot.git
+   cd DebtCollectorBot
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Setup**
+   
+   Create a `.env` file with the following variables:
+   ```env
+   DISCORD_TOKEN=your_bot_token_here
+   APP_ID=your_application_id_here
+   MONGODB_URI=your_mongodb_connection_string
+   ```
+
+4. **Register slash commands**
+   ```bash
+   npm run register
+   ```
+
+5. **Start the bot**
+   ```bash
+   npm start
+   ```
+
+   For development with hot reload:
+   ```bash
+   npm run dev
+   ```
+
+## Commands
+
+### Debt Management
+- `/add-debt <debtor> <amount> <description>` - Record a new debt
+- `/i-owe <creditor> <amount> <description>` - Record a debt you owe someone
+- `/debt <user> [amount] [description]` - Mark a debt as settled
+
+### View Balances
+- `/owed` - See all debts owed to you
+- `/owes-me <user>` - Check what a specific user owes you
+- `/total-owed` - Your total amount owed by others
+- `/total-debt` - Your total debt amount
+
+### Statistics
+- `/top-debtors` - Server leaderboard of biggest debtors
+- `/transactions [user]` - View transaction history
+
+### General
+- `/ping` - Check if the bot is responsive
+
+## Examples
 
 ```
-git clone https://github.com/discord/discord-example-app.git
+/add-debt @john 25.50 lunch at pizza place
+/i-owe @sarah 15.00 movie ticket
+/debt @john 25.50 paid back lunch money
+/owed
+/total-debt
 ```
 
-Then navigate to its directory and install dependencies:
+## Development
 
+### Project Structure
 ```
-cd discord-example-app
-npm install
-```
-
-### Get app credentials
-
-Fetch the credentials from your app's settings and add them to a `.env` file (see `.env.sample` for an example). You'll need your app ID (`APP_ID`), bot token (`DISCORD_TOKEN`), and public key (`PUBLIC_KEY`).
-
-Fetching credentials is covered in detail in the [getting started guide](https://discord.com/developers/docs/getting-started).
-
-> 🔑 Environment variables can be added to the `.env` file in Glitch or when developing locally, and in the Secrets tab in Replit (the lock icon on the left).
-
-### Install slash commands
-
-The commands for the example app are set up in `commands.js`. All of the commands in the `ALL_COMMANDS` array at the bottom of `commands.js` will be installed when you run the `register` command configured in `package.json`:
-
-```
-npm run register
+src/
+├── app.js              # Main application entry point
+├── commands/
+│   └── utility/        # Slash command implementations
+├── db/
+│   ├── db.js          # Database connection
+│   ├── dbQueries.js   # Read operations
+│   └── dbUpdates.js   # Write operations
+├── events/            # Discord.js event handlers
+└── utils/             # Helper functions
 ```
 
-### Run the app
+### Running Tests
+```bash
+# Run all tests
+npm test
 
-After your credentials are added, go ahead and run the app:
+# Run tests in watch mode
+npm run test:watch
 
-```
-node app.js
-```
-
-> ⚙️ A package [like `nodemon`](https://github.com/remy/nodemon), which watches for local changes and restarts your app, may be helpful while locally developing.
-
-If you aren't following the [getting started guide](https://discord.com/developers/docs/getting-started), you can move the contents of `examples/app.js` (the finished `app.js` file) to the top-level `app.js`.
-
-### Set up interactivity
-
-The project needs a public endpoint where Discord can send requests. To develop and test locally, you can use something like [`ngrok`](https://ngrok.com/) to tunnel HTTP traffic.
-
-Install ngrok if you haven't already, then start listening on port `3000`:
-
-```
-ngrok http 3000
+# Run tests with coverage
+npm run test:coverage
 ```
 
-You should see your connection open:
+### Database Schema
 
+The bot uses MongoDB with a "debts" collection. Each document represents a transaction:
+
+```javascript
+{
+  creditorId: "discord_user_id",
+  debtorId: "discord_user_id", 
+  amount: 25.50,
+  description: "lunch money",
+  settled: false,
+  guildId: "discord_guild_id",
+  timestamp: ISODate("2023-...")
+}
 ```
-Tunnel Status                 online
-Version                       2.0/2.0
-Web Interface                 http://127.0.0.1:4040
-Forwarding                    https://1234-someurl.ngrok.io -> localhost:3000
 
-Connections                  ttl     opn     rt1     rt5     p50     p90
-                              0       0       0.00    0.00    0.00    0.00
-```
+## Contributing
 
-Copy the forwarding address that starts with `https`, in this case `https://1234-someurl.ngrok.io`, then go to your [app's settings](https://discord.com/developers/applications).
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests (`npm test`)
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
-On the **General Information** tab, there will be an **Interactions Endpoint URL**. Paste your ngrok address there, and append `/interactions` to it (`https://1234-someurl.ngrok.io/interactions` in the example).
+## License
 
-Click **Save Changes**, and your app should be ready to run 🚀
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Other resources
+## Support
 
--   Read **[the documentation](https://discord.com/developers/docs/intro)** for in-depth information about API features.
--   Browse the `examples/` folder in this project for smaller, feature-specific code examples
--   Join the **[Discord Developers server](https://discord.gg/discord-developers)** to ask questions about the API, attend events hosted by the Discord API team, and interact with other devs.
--   Check out **[community resources](https://discord.com/developers/docs/topics/community-resources#community-resources)** for language-specific tools maintained by community members.
+- Report bugs by opening an [issue](https://github.com/your-username/DebtCollectorBot/issues)
+- Check the [documentation](https://github.com/your-username/DebtCollectorBot/wiki) for detailed guides
