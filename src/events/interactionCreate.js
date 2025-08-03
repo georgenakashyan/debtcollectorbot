@@ -1,8 +1,55 @@
 import { Events, MessageFlags } from "discord.js";
+import { partiallySettleTransaction } from "../db/dbUpdates.js";
+import { ObjectId } from "mongodb";
 
 export default {
 	name: Events.InteractionCreate,
 	async execute(interaction) {
+		// Handle modal submissions for partial payments
+		if (interaction.isModalSubmit() && interaction.customId.startsWith('partial_payment_')) {
+			const transactionId = interaction.customId.replace('partial_payment_', '');
+			const paymentAmount = parseFloat(interaction.fields.getTextInputValue('payment_amount'));
+
+			// Validate payment amount
+			if (isNaN(paymentAmount) || paymentAmount <= 0) {
+				return interaction.reply({
+					content: "Please enter a valid positive number.",
+					flags: MessageFlags.Ephemeral
+				});
+			}
+
+			try {
+				// Apply partial payment
+				const userId = interaction.user.id;
+				const updatedTransaction = await partiallySettleTransaction(userId, new ObjectId(transactionId), paymentAmount);
+				
+				if (!updatedTransaction) {
+					return interaction.reply({
+						content: "Transaction not found or you don't have permission to update it.",
+						flags: MessageFlags.Ephemeral
+					});
+				}
+
+				const remainingAmount = updatedTransaction.amount;
+				const wasFullySettled = remainingAmount <= 0;
+				
+				await interaction.reply({
+					content: wasFullySettled 
+						? `✅ Partial payment of $${paymentAmount} applied! Transaction fully paid off!`
+						: `✅ Partial payment of $${paymentAmount} applied! Remaining: $${remainingAmount.toFixed(2)}`,
+					flags: MessageFlags.Ephemeral
+				});
+				
+			} catch (error) {
+				console.error('Error processing partial payment:', error);
+				await interaction.reply({
+					content: "An error occurred while processing the partial payment.",
+					flags: MessageFlags.Ephemeral
+				});
+			}
+			return;
+		}
+
 		if (!interaction.isChatInputCommand()) return;
 
 		const command = interaction.client.commands.get(
