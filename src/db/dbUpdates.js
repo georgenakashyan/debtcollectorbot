@@ -24,7 +24,7 @@ export const settleTransaction = async (userId, transactionId) => {
 	const db = getDB();
 	await db.debts.findOneAndUpdate(
 		{ _id: transactionId, creditorId: userId },
-		{ $set: { isSettled: true } }
+		{ $set: { isSettled: true } },
 	);
 };
 
@@ -34,8 +34,43 @@ export const partiallySettleTransaction = async (
 	amount
 ) => {
 	const db = getDB();
-	await db.debts.findOneAndUpdate(
+	const result = await db.debts.findOneAndUpdate(
 		{ _id: transactionId, creditorId: userId },
-		{ $inc: { amount: -1 * amount } }
+		{ $inc: { amount: -1 * amount } },
+		{ returnDocument: "after" }
 	);
+
+	// Return null if document not found (wrong creditorId)
+	if (!result) {
+		return null;
+	}
+
+	// If amount becomes 0 or negative, mark as settled
+	if (result.amount <= 0) {
+		const settledResult = await db.debts.findOneAndUpdate(
+			{ _id: transactionId, creditorId: userId },
+			{ $set: { isSettled: true, amount: 0 } },
+			{ returnDocument: "after" }
+		);
+		
+		// Return the updated document with settled status
+		return settledResult;
+	}
+
+	return result;
+};
+
+export const deleteTransaction = async (userId, transactionId) => {
+	const db = getDB();
+	const result = await db.debts.findOneAndUpdate(
+		{
+			_id: transactionId,
+			creditorId: userId,
+		},
+		{
+			$set: { isSettled: true, amount: 0 },
+		},
+		{ returnDocument: "after" }
+	);
+	return result;
 };
