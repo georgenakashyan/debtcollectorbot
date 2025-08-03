@@ -1,12 +1,4 @@
-import {
-	Client,
-	Collection,
-	Events,
-	GatewayIntentBits,
-	MessageFlags,
-	REST,
-	Routes,
-} from "discord.js";
+import { Client, Collection, GatewayIntentBits } from "discord.js";
 import "dotenv/config";
 import fs from "node:fs";
 import path from "node:path";
@@ -27,7 +19,6 @@ const client = new Client({
 	],
 });
 const token = process.env.DISCORD_TOKEN;
-const clientId = process.env.APP_ID;
 
 client.commands = new Collection();
 
@@ -76,7 +67,8 @@ const eventFiles = fs
 for (const file of eventFiles) {
 	const filePath = path.join(eventsPath, file);
 	const fileUrl = `file://${filePath.replace(/\\/g, "/")}`;
-	const event = await import(fileUrl);
+	const eventModule = await import(fileUrl);
+	const event = eventModule.default;
 
 	if (event.once) {
 		console.log(`Loading once event: ${event.name}`);
@@ -86,73 +78,6 @@ for (const file of eventFiles) {
 		client.on(event.name, (...args) => event.execute(...args));
 	}
 }
-
-// Wait for the client to be ready before registering commands
-client.once(Events.ClientReady, async () => {
-	console.log(`Logged in as ${client.user.tag}!`);
-
-	// Construct and prepare an instance of the REST module
-	const rest = new REST().setToken(token);
-
-	try {
-		console.log("Started refreshing application (/) commands.");
-		console.log(`Registering ${client.commands.size} commands...`);
-
-		const commandsData = client.commands.map((command) =>
-			command.data.toJSON()
-		);
-		console.log(
-			"Commands to register:",
-			commandsData.map((cmd) => cmd.name)
-		);
-
-		// Update all commands to Discord
-		const data = await rest.put(Routes.applicationCommands(clientId), {
-			body: commandsData,
-		});
-
-		console.log(
-			`Successfully reloaded ${data.length} application (/) commands.`
-		);
-	} catch (error) {
-		console.error("Error registering commands:", error);
-	}
-});
-
-// Handle slash command interactions
-client.on(Events.InteractionCreate, async (interaction) => {
-	if (interaction.isChatInputCommand()) {
-		console.log(`Received command: ${interaction.commandName}`);
-
-		const command = interaction.client.commands.get(
-			interaction.commandName
-		);
-
-		if (!command) {
-			console.error(
-				`No command matching ${interaction.commandName} was found.`
-			);
-			return;
-		}
-
-		try {
-			await command.execute(interaction);
-		} catch (error) {
-			console.error("Command execution error:", error);
-			if (interaction.replied || interaction.deferred) {
-				await interaction.followUp({
-					content: "There was an error while executing this command!",
-					flags: MessageFlags.Ephemeral,
-				});
-			} else {
-				await interaction.reply({
-					content: "There was an error while executing this command!",
-					flags: MessageFlags.Ephemeral,
-				});
-			}
-		}
-	}
-});
 
 // Login to Discord
 client.login(token);
