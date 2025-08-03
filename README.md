@@ -1,9 +1,6 @@
 # DebtCollector Bot
 
 [![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/212yh.svg)](https://uptime.betterstack.com/?utm_source=status_badge)
-# DebtCollector Bot
-
-[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/212yh.svg)](https://uptime.betterstack.com/?utm_source=status_badge)
 
 A Discord bot that helps you track debts and IOUs within your Discord community. Keep tabs on who owes what, settle debts, and maintain accountability among friends and group members.
 
