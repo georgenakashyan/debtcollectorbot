@@ -13,7 +13,7 @@ import {
 } from "discord.js";
 import { ObjectId } from "mongodb";
 import { getAllUnsettledTransactionsFromSomeone } from "../../db/dbQueries.js";
-import { deleteTransaction, settleTransaction } from "../../db/dbUpdates.js";
+import { settleTransaction } from "../../db/dbUpdates.js";
 const TRANSACTIONS_PER_PAGE = 10;
 
 function buildTransactionEmbed(
@@ -86,11 +86,6 @@ function buildActionRows(
 		// Action buttons row
 		const actionRow = new ActionRowBuilder().addComponents(
 			new ButtonBuilder()
-				.setCustomId("delete_selected")
-				.setLabel("Delete Transaction")
-				.setStyle(ButtonStyle.Danger)
-				.setDisabled(!buttonsEnabled),
-			new ButtonBuilder()
 				.setCustomId("partial_pay_selected")
 				.setLabel("Partial Payment")
 				.setStyle(ButtonStyle.Primary)
@@ -135,44 +130,34 @@ export default {
 				.setRequired(true)
 		),
 	async execute(interaction) {
-		console.log("=== TRANSACTIONS COMMAND STARTED ===");
 		const userId = interaction.user.id;
 		const debtorId = interaction.options.getUser("debtor").id;
-		console.log(`User ID: ${userId}, Debtor ID: ${debtorId}`);
 
 		if (userId === debtorId) {
-			console.log("ERROR: User tried to select themselves as debtor");
+			console.error("ERROR: User tried to select themselves as debtor");
 			return await interaction.reply({
 				content: "You can't owe yourself money!",
-				flags: MessageFlags.Ephemeral
+				flags: MessageFlags.Ephemeral,
 			});
 		}
 
 		// Defer the response to give us more time for database operations
-		console.log("Deferring reply...");
 		await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-		console.log("Reply deferred successfully");
-
-		console.log("Fetching unsettled transactions from database...");
 		const allTransactions = await getAllUnsettledTransactionsFromSomeone(
 			userId,
 			debtorId
 		);
-		console.log(`Found ${allTransactions.length} unsettled transactions`);
 
 		if (allTransactions.length === 0) {
-			console.log("No transactions found, sending empty response");
+			console.error("No transactions found, sending empty response");
 			return await interaction.editReply({
 				content: `<@${debtorId}> owes you nothing`,
 			});
 		}
 
 		let page = 0;
-		const totalPages = Math.ceil(
+		let totalPages = Math.ceil(
 			allTransactions.length / TRANSACTIONS_PER_PAGE
-		);
-		console.log(
-			`Pagination setup: ${totalPages} total pages, ${TRANSACTIONS_PER_PAGE} per page`
 		);
 
 		const getPageTransactions = (page) =>
@@ -183,7 +168,6 @@ export default {
 
 		const getStartIndex = (page) => page * TRANSACTIONS_PER_PAGE;
 
-		console.log("Building initial embed and action rows...");
 		const embed = buildTransactionEmbed(
 			getPageTransactions(page),
 			debtorId,
@@ -197,30 +181,22 @@ export default {
 			totalPages,
 			getStartIndex(page)
 		);
-		console.log("Embed and action rows built successfully");
 
-		console.log("Sending initial reply...");
 		const reply = await interaction.editReply({
 			embeds: [embed],
 			components: rows,
 		});
-		console.log("Initial reply sent successfully");
 
 		// Collector for all component interactions
-		console.log("Creating message component collector...");
 		const collector = reply.createMessageComponentCollector({
-			time: 10 * 60 * 1000, // 10 minutes
+			time: 5 * 60 * 1000, // 5 minutes
 		});
-		console.log("Collector created, listening for interactions...");
 
 		let selectedTransactionId = null;
 
 		collector.on("collect", async (componentInt) => {
-			console.log(
-				`Component interaction received: ${componentInt.customId} from user ${componentInt.user.id}`
-			);
 			if (componentInt.user.id !== interaction.user.id) {
-				console.log(
+				console.error(
 					"UNAUTHORIZED: Different user tried to use components"
 				);
 				return componentInt.reply({
@@ -232,7 +208,6 @@ export default {
 			// Handle select menu interactions
 			if (componentInt.customId === "select_transaction") {
 				selectedTransactionId = componentInt.values[0];
-				console.log(`Transaction selected: ${selectedTransactionId}`);
 
 				// Enable action buttons
 				const currentPageTransactions = getPageTransactions(page);
@@ -244,181 +219,25 @@ export default {
 					true
 				);
 
-				console.log("Updating components to enable action buttons...");
 				await componentInt.update({
 					components: newRows,
 				});
-				console.log("Components updated successfully");
 				return;
 			}
 
 			// Handle pagination
 			if (componentInt.customId === "prev_page" && page > 0) {
-				console.log(`Going to previous page: ${page - 1}`);
 				page--;
 				selectedTransactionId = null;
 			} else if (
 				componentInt.customId === "next_page" &&
 				page < totalPages - 1
 			) {
-				console.log(`Going to next page: ${page + 1}`);
 				page++;
 				selectedTransactionId = null;
-			} else if (componentInt.customId === "delete_selected") {
-				console.log("Delete transaction button clicked");
-				if (!selectedTransactionId) {
-					console.log("ERROR: No transaction selected for deletion");
-					return componentInt.reply({
-						content: "Please select a transaction first.",
-						flags: MessageFlags.Ephemeral,
-					});
-				}
-
-				// Show confirmation
-				const confirmationRow = new ActionRowBuilder().addComponents(
-					new ButtonBuilder()
-						.setCustomId(`confirm_delete_${selectedTransactionId}`)
-						.setLabel("Yes, Delete")
-						.setStyle(ButtonStyle.Danger),
-					new ButtonBuilder()
-						.setCustomId("cancel_delete")
-						.setLabel("Cancel")
-						.setStyle(ButtonStyle.Secondary)
-				);
-
-				console.log("Showing delete confirmation dialog...");
-				await componentInt.reply({
-					content:
-						"⚠️ Are you sure you want to delete this transaction? This action cannot be undone.",
-					components: [confirmationRow],
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			} else if (componentInt.customId.startsWith("confirm_delete_")) {
-				const transactionIdToDelete = componentInt.customId.replace(
-					"confirm_delete_",
-					""
-				);
-				console.log(
-					`Confirming deletion of transaction: ${transactionIdToDelete}`
-				);
-
-				try {
-					console.log(
-						"Attempting to delete transaction from database..."
-					);
-					const deletedTransaction = await deleteTransaction(
-						userId,
-						new ObjectId(transactionIdToDelete)
-					);
-					console.log(
-						"Delete operation result:",
-						deletedTransaction ? "SUCCESS" : "FAILED"
-					);
-
-					if (!deletedTransaction) {
-						console.log(
-							"ERROR: Transaction not found or permission denied"
-						);
-						return componentInt.reply({
-							content:
-								"Transaction not found or you don't have permission to delete it.",
-							flags: MessageFlags.Ephemeral,
-						});
-					}
-
-					// Refresh transaction list
-					console.log(
-						"Refreshing transaction list after deletion..."
-					);
-					allTransactions =
-						await getAllUnsettledTransactionsFromSomeone(
-							userId,
-							debtorId
-						);
-					console.log(
-						`Updated transaction count: ${allTransactions.length}`
-					);
-
-					if (allTransactions.length === 0) {
-						console.log(
-							"All transactions cleared, stopping collector"
-						);
-						await componentInt.update({
-							content: `✅ Transaction deleted! <@${debtorId}> now owes you nothing.`,
-							embeds: [],
-							components: [],
-						});
-						collector.stop();
-						return;
-					}
-
-					// Recalculate pagination
-					console.log("Recalculating pagination after deletion...");
-					const newTotalPages = Math.ceil(
-						allTransactions.length / TRANSACTIONS_PER_PAGE
-					);
-					if (page >= newTotalPages) {
-						page = Math.max(0, newTotalPages - 1);
-						console.log(`Adjusted page to: ${page}`);
-					}
-					totalPages = newTotalPages;
-					selectedTransactionId = null;
-					console.log(
-						`New pagination: page ${page} of ${totalPages}`
-					);
-
-					console.log("Updating confirmation message...");
-					await componentInt.update({
-						content: "✅ Transaction deleted successfully!",
-						components: [],
-					});
-
-					// Update main message
-					const newEmbed = buildTransactionEmbed(
-						getPageTransactions(page),
-						debtorId,
-						page,
-						totalPages,
-						getStartIndex(page)
-					);
-					const newRows = buildActionRows(
-						getPageTransactions(page),
-						page,
-						totalPages,
-						getStartIndex(page),
-						true
-					);
-
-					console.log(
-						"Updating main message with new transaction list..."
-					);
-					await reply.edit({
-						embeds: [newEmbed],
-						components: newRows,
-					});
-					console.log("Main message updated successfully");
-				} catch (error) {
-					console.error("ERROR deleting transaction:", error);
-					console.error("Error stack:", error.stack);
-					await componentInt.reply({
-						content:
-							"An error occurred while deleting the transaction.",
-						flags: MessageFlags.Ephemeral,
-					});
-				}
-				return;
-			} else if (componentInt.customId === "cancel_delete") {
-				console.log("Delete operation cancelled by user");
-				await componentInt.update({
-					content: "❌ Delete cancelled.",
-					components: [],
-				});
-				return;
 			} else if (componentInt.customId === "partial_pay_selected") {
-				console.log("Partial payment button clicked");
 				if (!selectedTransactionId) {
-					console.log(
+					console.error(
 						"ERROR: No transaction selected for partial payment"
 					);
 					return componentInt.reply({
@@ -428,14 +247,11 @@ export default {
 				}
 
 				// Find the selected transaction
-				console.log(
-					`Looking for transaction: ${selectedTransactionId}`
-				);
 				const selectedTransaction = allTransactions.find(
 					(tx) => tx._id.toString() === selectedTransactionId
 				);
 				if (!selectedTransaction) {
-					console.log(
+					console.error(
 						"ERROR: Selected transaction not found in current list"
 					);
 					return componentInt.reply({
@@ -443,9 +259,6 @@ export default {
 						flags: MessageFlags.Ephemeral,
 					});
 				}
-				console.log(
-					`Found transaction: $${selectedTransaction.amount} - ${selectedTransaction.description}`
-				);
 
 				// Create partial payment modal
 				const modal = new ModalBuilder()
@@ -465,14 +278,11 @@ export default {
 				);
 				modal.addComponents(firstActionRow);
 
-				console.log("Showing partial payment modal...");
 				await componentInt.showModal(modal);
-				console.log("Modal shown successfully");
 				return;
 			} else if (componentInt.customId === "settle_selected") {
-				console.log("Settle full amount button clicked");
 				if (!selectedTransactionId) {
-					console.log(
+					console.error(
 						"ERROR: No transaction selected for settlement"
 					);
 					return componentInt.reply({
@@ -482,20 +292,13 @@ export default {
 				}
 
 				try {
-					console.log(
-						`Attempting to fully settle transaction: ${selectedTransactionId}`
-					);
 					const settledTransaction = await settleTransaction(
 						userId,
-						selectedTransactionId
-					);
-					console.log(
-						"Settlement operation result:",
-						settledTransaction ? "SUCCESS" : "FAILED"
+						new ObjectId(selectedTransactionId)
 					);
 
 					if (!settledTransaction) {
-						console.log(
+						console.error(
 							"ERROR: Transaction not found or permission denied for settlement"
 						);
 						return componentInt.reply({
@@ -506,22 +309,20 @@ export default {
 					}
 
 					// Refresh transaction list
-					console.log(
-						"Refreshing transaction list after settlement..."
-					);
-					const allTransactions =
+					const updatedTransactions =
 						await getAllUnsettledTransactionsFromSomeone(
 							userId,
 							debtorId
 						);
-					console.log(
-						`Updated transaction count after settlement: ${allTransactions.length}`
+
+					// Update the main transactions array
+					allTransactions.splice(
+						0,
+						allTransactions.length,
+						...updatedTransactions
 					);
 
 					if (allTransactions.length === 0) {
-						console.log(
-							"All transactions settled, stopping collector"
-						);
 						await componentInt.update({
 							content: `✅ Transaction settled! <@${debtorId}> now owes you nothing.`,
 							embeds: [],
@@ -532,21 +333,15 @@ export default {
 					}
 
 					// Recalculate pagination
-					console.log("Recalculating pagination after settlement...");
 					const newTotalPages = Math.ceil(
 						allTransactions.length / TRANSACTIONS_PER_PAGE
 					);
 					if (page >= newTotalPages) {
 						page = Math.max(0, newTotalPages - 1);
-						console.log(`Adjusted page to: ${page}`);
 					}
 					totalPages = newTotalPages;
 					selectedTransactionId = null;
-					console.log(
-						`New pagination after settlement: page ${page} of ${totalPages}`
-					);
 
-					console.log("Sending settlement success message...");
 					await componentInt.reply({
 						content: "✅ Transaction settled successfully!",
 						flags: MessageFlags.Ephemeral,
@@ -565,20 +360,15 @@ export default {
 						page,
 						totalPages,
 						getStartIndex(page),
-						true
+						false
 					);
 
-					console.log(
-						"Updating main message with settled transaction list..."
-					);
 					await reply.edit({
 						embeds: [newEmbed],
 						components: newRows,
 					});
-					console.log("Main message updated after settlement");
 				} catch (error) {
 					console.error("ERROR settling transaction:", error);
-					console.error("Error stack:", error.stack);
 					await componentInt.reply({
 						content:
 							"An error occurred while settling the transaction.",
@@ -587,12 +377,11 @@ export default {
 				}
 				return;
 			} else {
-				console.log(`Unknown interaction: ${componentInt.customId}`);
+				console.error(`Unknown interaction: ${componentInt.customId}`);
 				return;
 			}
 
 			// Update page display for pagination
-			console.log(`Updating page display for page ${page}...`);
 			const newEmbed = buildTransactionEmbed(
 				getPageTransactions(page),
 				debtorId,
@@ -605,26 +394,22 @@ export default {
 				page,
 				totalPages,
 				getStartIndex(page),
-				true
+				false
 			);
 
-			console.log("Updating pagination display...");
 			await componentInt.update({
 				embeds: [newEmbed],
 				components: newRows,
 			});
-			console.log("Pagination display updated successfully");
 		});
 
 		collector.on("end", async () => {
 			console.log("Component collector ended, disabling components...");
 			try {
 				await reply.edit({ components: [] });
-				console.log("Components disabled successfully");
 			} catch (error) {
-				console.log("Failed to disable components:", error.message);
+				console.error("Failed to disable components:", error.message);
 			}
-			console.log("=== TRANSACTIONS COMMAND ENDED ===");
 		});
 	},
 };
