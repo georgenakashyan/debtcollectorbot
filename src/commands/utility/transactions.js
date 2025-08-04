@@ -134,7 +134,6 @@ export default {
 		const debtorId = interaction.options.getUser("debtor").id;
 
 		if (userId === debtorId) {
-			console.error("ERROR: User tried to select themselves as debtor");
 			return await interaction.reply({
 				content: "You can't owe yourself money!",
 				flags: MessageFlags.Ephemeral,
