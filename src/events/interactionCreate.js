@@ -17,10 +17,9 @@ export default {
 					interaction.fields.getTextInputValue("payment_amount");
 				const parsedAmount = parseFloat(rawInput);
 
-				// Truncate to 2 decimal places by converting to fixed and back to float
 				const paymentAmount = isNaN(parsedAmount)
 					? NaN
-					: parseFloat(parsedAmount.toFixed(2));
+					: Math.floor(parsedAmount * 100) / 100;
 
 				// Validate payment amount
 				if (isNaN(paymentAmount) || paymentAmount <= 0) {
