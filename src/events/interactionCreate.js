@@ -12,9 +12,15 @@ export default {
 					"partial_payment_",
 					""
 				);
-				const paymentAmount = parseFloat(
-					interaction.fields.getTextInputValue("payment_amount")
-				);
+				// Get raw input and truncate to 2 decimal places
+				const rawInput =
+					interaction.fields.getTextInputValue("payment_amount");
+				const parsedAmount = parseFloat(rawInput);
+
+				// Truncate to 2 decimal places by converting to fixed and back to float
+				const paymentAmount = isNaN(parsedAmount)
+					? NaN
+					: parseFloat(parsedAmount.toFixed(2));
 
 				// Validate payment amount
 				if (isNaN(paymentAmount) || paymentAmount <= 0) {
