@@ -79,7 +79,7 @@ describe('Database Queries', () => {
         test('should return total unsettled debt between two users', async () => {
             const result = await getTotalDebtFromSomeone('alice', 'bob');
             
-            expect(result.totalAmount).toBe('75.50'); // 50.00 + 25.50 (formatted)
+            expect(result.totalAmount).toBe(75.50); // 50.00 + 25.50 (formatted)
             expect(result.debtCount).toBe(2);
         });
 
@@ -94,7 +94,7 @@ describe('Database Queries', () => {
             // The settled 30.00 debt should not be included
             const result = await getTotalDebtFromSomeone('alice', 'bob');
             
-            expect(result.totalAmount).toBe('75.50');
+            expect(result.totalAmount).toBe(75.50);
             expect(result.debtCount).toBe(2);
         });
     });
