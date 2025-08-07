@@ -47,9 +47,12 @@ export async function getTotalDebtFromSomeone(creditorId, debtorId) {
 		},
 	];
 
-	const result = await db.debts.aggregate(pipeline).toArray();
-	if (result[0]) result[0].totalAmount = formatNumber(result[0].totalAmount);
-	return result[0] || { totalAmount: 0, debtCount: 0 };
+	const results = await db.debts.aggregate(pipeline).toArray();
+	results.forEach((debtor) => {
+		debtor.totalAmount = formatNumber(debtor.totalAmount);
+	});
+
+	return results[0] || { totalAmount: 0, debtCount: 0 };
 }
 
 /**
@@ -81,8 +84,12 @@ export async function getTopDebtors(guildId, limit = 10) {
 		},
 	];
 
-	const result = await db.debts.aggregate(pipeline).toArray();
-	return result || [];
+	const results = await db.debts.aggregate(pipeline).toArray();
+	results.forEach((debtor) => {
+		debtor.totalAmount = formatNumber(debtor.totalAmount);
+	});
+
+	return results || [];
 }
 
 /**
@@ -113,6 +120,9 @@ export async function getUserDebts(guildId = null, userId) {
 	];
 
 	const results = await db.debts.aggregate(pipeline).toArray();
+	results.forEach((debtor) => {
+		debtor.totalAmount = formatNumber(debtor.totalAmount);
+	});
 
 	return results[0] || { totalAmount: 0, debtCount: 0 };
 }
@@ -146,10 +156,20 @@ export async function getUserCredits(guildId, userId) {
 	];
 
 	const results = await db.debts.aggregate(pipeline).toArray();
+	results.forEach((debtor) => {
+		debtor.totalAmount = formatNumber(debtor.totalAmount);
+	});
 
 	return results[0] || { totalAmount: 0, debtCount: 0 };
 }
 
+/**
+ * Get all unsettled debts for a specific user (what they owe to others).
+ *
+ * @param {string} creditorId - The ID of the creditor.
+ * @param {string} debtorId - The ID of the debtor.
+ * @returns {Array} An array of debt objects.
+ */
 export async function getAllUnsettledTransactionsFromSomeone(
 	creditorId,
 	debtorId
