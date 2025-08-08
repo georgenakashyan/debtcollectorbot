@@ -16,7 +16,7 @@ A Discord bot that helps you track debts and IOUs within your Discord community.
 
 ### Option 1: Invite the Bot (Recommended)
 
-[**Invite DebtCollector Bot to your Discord server**](https://discord.com/oauth2/authorize?client_id=1389366055314522182)
+[**Invite DebtCollector Bot to your Discord server**](https://discord.com/oauth2/authorize?client_id=1403163880032829470)
 A Discord bot that helps you track debts and IOUs within your Discord community. Keep tabs on who owes what, settle debts, and maintain accountability among friends and group members.
 
 ## Features
@@ -26,16 +26,6 @@ A Discord bot that helps you track debts and IOUs within your Discord community.
 - **Settlement Tracking**: Mark debts as paid when settled
 - **Transaction History**: View complete transaction logs
 - **Leaderboards**: See top debtors and creditors in your server
-
-## Quick Start
-
-### Option 1: Invite the Bot (Recommended)
-
-[**Invite DebtCollector Bot to your Discord server**](https://discord.com/oauth2/authorize?client_id=1389366055314522182)
-
-Required permissions:
-- `applications.commands` - For slash commands
-- `bot` with "Send Messages" - For responses
 
 ### Option 2: Self-Host
 
