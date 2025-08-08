@@ -19,37 +19,6 @@ A Discord bot that helps you track debts and IOUs within your Discord community.
 [**Invite DebtCollector Bot to your Discord server**](https://discord.com/oauth2/authorize?client_id=1403163880032829470)
 A Discord bot that helps you track debts and IOUs within your Discord community. Keep tabs on who owes what, settle debts, and maintain accountability among friends and group members.
 
-## Features
-
-- **Track Debts**: Record who owes money to whom with detailed descriptions
-- **View Balances**: Check individual and total debt amounts
-- **Settlement Tracking**: Mark debts as paid when settled
-- **Transaction History**: View complete transaction logs
-- **Leaderboards**: See top debtors and creditors in your server
-
-### Option 2: Self-Host
-
-Requirements:
-- Node.js 18.x or higher
-- MongoDB database
-- Discord Bot Token
-
-## Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/DebtCollectorBot.git
-   cd DebtCollectorBot
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-Required permissions:
-- `applications.commands` - For slash commands
-- `bot` with "Send Messages" - For responses
-
 ### Option 2: Self-Host
 
 Requirements:
@@ -79,25 +48,7 @@ Requirements:
    MONGODB_URI=your_mongodb_connection_string
    ```
 
-4. **Register slash commands**
-   ```bash
-   npm run register
-   ```
-3. **Environment Setup**
-   
-   Create a `.env` file with the following variables:
-   ```env
-   DISCORD_TOKEN=your_bot_token_here
-   APP_ID=your_application_id_here
-   MONGODB_URI=your_mongodb_connection_string
-   ```
-
-4. **Register slash commands**
-   ```bash
-   npm run register
-   ```
-
-5. **Start the bot**
+4. **Start the bot**
    ```bash
    npm start
    ```
