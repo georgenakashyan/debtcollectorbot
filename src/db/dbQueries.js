@@ -164,6 +164,86 @@ export async function getUserCredits(guildId, userId) {
 }
 
 /**
+ * Get breakdown of debts owed by a user to individual creditors.
+ *
+ * @param {string} guildId - The guild ID in which the debt exists.
+ * @param {string} userId - The ID of the user whose debts are being retrieved.
+ * @returns {Array} An array of objects with creditorId, totalAmount, and debtCount.
+ */
+export async function getUserDebtsByCreditor(guildId, userId) {
+	const db = getDB();
+	const match = { debtorId: userId, isSettled: false };
+	if (guildId) {
+		match.guildId = guildId;
+	}
+
+	const pipeline = [
+		{
+			$match: match,
+		},
+		{
+			$group: {
+				_id: "$creditorId",
+				totalAmount: { $sum: "$amount" },
+				debtCount: { $sum: 1 },
+			},
+		},
+		{
+			$sort: { totalAmount: -1 },
+		},
+	];
+
+	const results = await db.debts.aggregate(pipeline).toArray();
+	results.forEach((creditor) => {
+		creditor.creditorId = creditor._id;
+		creditor.totalAmount = formatNumber(creditor.totalAmount);
+		delete creditor._id;
+	});
+
+	return results || [];
+}
+
+/**
+ * Get breakdown of credits owed to a user by individual debtors.
+ *
+ * @param {string} guildId - The guild ID in which the debt exists.
+ * @param {string} userId - The ID of the user whose credits are being retrieved.
+ * @returns {Array} An array of objects with debtorId, totalAmount, and debtCount.
+ */
+export async function getUserCreditsByDebtor(guildId, userId) {
+	const db = getDB();
+	const match = { creditorId: userId, isSettled: false };
+	if (guildId) {
+		match.guildId = guildId;
+	}
+
+	const pipeline = [
+		{
+			$match: match,
+		},
+		{
+			$group: {
+				_id: "$debtorId",
+				totalAmount: { $sum: "$amount" },
+				debtCount: { $sum: 1 },
+			},
+		},
+		{
+			$sort: { totalAmount: -1 },
+		},
+	];
+
+	const results = await db.debts.aggregate(pipeline).toArray();
+	results.forEach((debtor) => {
+		debtor.debtorId = debtor._id;
+		debtor.totalAmount = formatNumber(debtor.totalAmount);
+		delete debtor._id;
+	});
+
+	return results || [];
+}
+
+/**
  * Get all unsettled debts for a specific user (what they owe to others).
  *
  * @param {string} creditorId - The ID of the creditor.

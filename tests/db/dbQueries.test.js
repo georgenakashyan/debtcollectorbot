@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MongoClient } from 'mongodb';
-import { getTotalDebtFromSomeone, getUserDebts, getUserCredits, getAllUnsettledTransactionsFromSomeone } from '../../src/db/dbQueries.js';
+import { getTotalDebtFromSomeone, getUserDebts, getUserCredits, getAllUnsettledTransactionsFromSomeone, getUserDebtsByCreditor, getUserCreditsByDebtor } from '../../src/db/dbQueries.js';
 import { getDB } from '../../src/db/db.js';
 
 let mongoServer;
@@ -66,6 +66,16 @@ describe('Database Queries', () => {
                 createdAt: Date.now(),
                 isSettled: true,
                 currency: 'USD'
+            },
+            {
+                creditorId: 'charlie',
+                debtorId: 'bob',
+                amount: 100.00,
+                description: 'Guild2 debt',
+                guildId: 'guild2',
+                createdAt: Date.now(),
+                isSettled: false,
+                currency: 'USD'
             }
         ]);
     });
@@ -117,8 +127,8 @@ describe('Database Queries', () => {
         test('should work without guild filter', async () => {
             const result = await getUserDebts(null, 'bob');
             
-            expect(result.totalAmount).toBe(75.50);
-            expect(result.debtCount).toBe(2);
+            expect(result.totalAmount).toBe(175.5); // 75.5 from guild1 + 100 from guild2
+            expect(result.debtCount).toBe(3);
         });
     });
 
@@ -159,6 +169,120 @@ describe('Database Queries', () => {
             
             // Should not include the settled 30.00 transaction
             expect(result.every(tx => tx.amount !== 30.00)).toBe(true);
+        });
+    });
+
+    describe('getUserDebtsByCreditor', () => {
+        test('should return breakdown of debts by creditor', async () => {
+            const result = await getUserDebtsByCreditor('guild1', 'bob');
+            
+            expect(result).toHaveLength(1);
+            expect(result[0]).toEqual({
+                creditorId: 'alice',
+                totalAmount: 75.5,
+                debtCount: 2
+            });
+        });
+
+        test('should return empty array when user owes nothing', async () => {
+            const result = await getUserDebtsByCreditor('guild1', 'alice');
+            
+            expect(result).toHaveLength(0);
+        });
+
+        test('should filter by guild when provided', async () => {
+            const result = await getUserDebtsByCreditor('guild2', 'bob');
+            
+            expect(result).toHaveLength(1);
+            expect(result[0]).toEqual({
+                creditorId: 'charlie',
+                totalAmount: 100,
+                debtCount: 1
+            });
+        });
+
+        test('should exclude settled transactions', async () => {
+            const result = await getUserDebtsByCreditor('guild1', 'bob');
+            
+            // Should not count the settled 30.00 transaction
+            expect(result[0].totalAmount).toBe(75.5);
+        });
+
+        test('should sort by amount descending', async () => {
+            // Add another creditor for bob in guild1
+            await db.debts.insertOne({
+                creditorId: 'david',
+                debtorId: 'bob',
+                amount: 200.00,
+                description: 'Big loan',
+                guildId: 'guild1',
+                createdAt: Date.now(),
+                isSettled: false,
+                currency: 'USD'
+            });
+
+            const result = await getUserDebtsByCreditor('guild1', 'bob');
+            
+            expect(result).toHaveLength(2);
+            expect(result[0].creditorId).toBe('david');
+            expect(result[1].creditorId).toBe('alice');
+        });
+    });
+
+    describe('getUserCreditsByDebtor', () => {
+        test('should return breakdown of credits by debtor', async () => {
+            const result = await getUserCreditsByDebtor('guild1', 'alice');
+            
+            expect(result).toHaveLength(1);
+            expect(result[0]).toEqual({
+                debtorId: 'bob',
+                totalAmount: 75.5,
+                debtCount: 2
+            });
+        });
+
+        test('should return empty array when user is owed nothing', async () => {
+            const result = await getUserCreditsByDebtor('guild1', 'charlie');
+            
+            expect(result).toHaveLength(0);
+        });
+
+        test('should filter by guild when provided', async () => {
+            const result = await getUserCreditsByDebtor('guild2', 'charlie');
+            
+            expect(result).toHaveLength(1);
+            expect(result[0]).toEqual({
+                debtorId: 'bob',
+                totalAmount: 100,
+                debtCount: 1
+            });
+        });
+
+        test('should exclude settled transactions', async () => {
+            const result = await getUserCreditsByDebtor('guild1', 'alice');
+            
+            // Should not count the settled 30.00 transaction
+            expect(result[0].totalAmount).toBe(75.5);
+        });
+
+        test('should sort by amount descending', async () => {
+            // Add another debtor for alice in guild1
+            await db.debts.insertOne({
+                creditorId: 'alice',
+                debtorId: 'eve',
+                amount: 150.00,
+                description: 'Big debt',
+                guildId: 'guild1',
+                createdAt: Date.now(),
+                isSettled: false,
+                currency: 'USD'
+            });
+
+            const result = await getUserCreditsByDebtor('guild1', 'alice');
+            
+            expect(result).toHaveLength(2);
+            expect(result[0].debtorId).toBe('eve');
+            expect(result[1].debtorId).toBe('bob');
         });
     });
 });
