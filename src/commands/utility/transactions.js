@@ -370,7 +370,8 @@ export default {
 						if (allTransactions.length === 0) {
 							await safeInteractionResponse(
 								modalSubmission,
-								`✅ Payment processed! <@${debtorId}> has paid off all their debts to <@${userId}>.`
+								`✅ Payment processed! <@${debtorId}> has paid off all their debts to <@${userId}>.`,
+								true
 							);
 							collector.stop();
 							return;
@@ -396,7 +397,7 @@ export default {
 								: `✅ Partial payment processed! <@${debtorId}> paid $${paymentAmount}. Remaining balance: $${remainingAmount.toFixed(
 										2
 								  )}.`,
-							false
+							true
 						);
 
 						// Update main message
