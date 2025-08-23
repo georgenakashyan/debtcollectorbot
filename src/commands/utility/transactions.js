@@ -500,7 +500,6 @@ export default {
 					if (allTransactions.length === 0) {
 						await componentInt.reply({
 							content: `✅ Transaction settled! <@${debtorId}> has paid off all their debts to <@${userId}>. `,
-							flags: MessageFlags.Ephemeral,
 						});
 						collector.stop();
 						return;
