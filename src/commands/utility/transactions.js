@@ -17,6 +17,7 @@ import {
 	partiallySettleTransaction,
 	settleTransaction,
 } from "../../db/dbUpdates.js";
+import { formatNumber } from "../../utils/utils.js";
 const TRANSACTIONS_PER_PAGE = 10;
 
 // Utility function to safely handle interaction responses
@@ -60,7 +61,9 @@ function buildTransactionEmbed(
 							const date = new Date(
 								tx.createdAt
 							).toLocaleDateString();
-							return `**${txNumber}.** $${tx.amount} - ${
+							return `**${txNumber}.** $${formatNumber(
+								tx.amount
+							)} - ${
 								tx.description || "*No description*"
 							} *(${date})*`;
 						})
@@ -96,7 +99,11 @@ function buildActionRows(
 							? tx.description.substring(0, 30) + "..."
 							: tx.description || "No description";
 					return new StringSelectMenuOptionBuilder()
-						.setLabel(`${txNumber}. $${tx.amount} - ${shortDesc}`)
+						.setLabel(
+							`${txNumber}. $${formatNumber(
+								tx.amount
+							)} - ${shortDesc}`
+						)
 						.setValue(tx._id.toString())
 						.setDescription(
 							`Created: ${new Date(
@@ -294,7 +301,9 @@ export default {
 					.setCustomId("payment_amount")
 					.setLabel("Payment Amount")
 					.setStyle(TextInputStyle.Short)
-					.setPlaceholder(`Max: $${selectedTransaction.amount}`)
+					.setPlaceholder(
+						`Max: $${formatNumber(selectedTransaction.amount)}`
+					)
 					.setRequired(true)
 					.setMaxLength(10);
 
@@ -334,7 +343,11 @@ export default {
 					if (paymentAmount > selectedTransaction.amount) {
 						return await safeInteractionResponse(
 							modalSubmission,
-							`Payment amount ($${paymentAmount}) cannot exceed the debt amount ($${selectedTransaction.amount}).`,
+							`Payment amount ($${formatNumber(
+								paymentAmount
+							)}) cannot exceed the debt amount ($${formatNumber(
+								selectedTransaction.amount
+							)}).`,
 							true
 						);
 					}
@@ -393,9 +406,13 @@ export default {
 						await safeInteractionResponse(
 							modalSubmission,
 							wasFullyPaid
-								? `✅ Payment processed! <@${debtorId}> paid $${paymentAmount} and fully settled the debt.`
-								: `✅ Partial payment processed! <@${debtorId}> paid $${paymentAmount}. Remaining balance: $${remainingAmount.toFixed(
-										2
+								? `✅ Payment processed! <@${debtorId}> paid $${formatNumber(
+										paymentAmount
+								  )} and fully settled the debt.`
+								: `✅ Partial payment processed! <@${debtorId}> paid $${formatNumber(
+										paymentAmount
+								  )}. Remaining balance: $${formatNumber(
+										remainingAmount.toFixed(2)
 								  )}.`,
 							true
 						);
@@ -516,7 +533,9 @@ export default {
 					selectedTransactionId = null;
 
 					await componentInt.reply({
-						content: `✅ Transaction settled! <@${debtorId}> paid off $${settledTransaction.amount} for '${settledTransaction.description}'.`,
+						content: `✅ Transaction settled! <@${debtorId}> paid off $${formatNumber(
+							settledTransaction.amount
+						)} for '${settledTransaction.description}'.`,
 					});
 
 					// Update main message
