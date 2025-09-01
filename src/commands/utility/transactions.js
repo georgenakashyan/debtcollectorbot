@@ -302,7 +302,7 @@ export default {
 					.setLabel("Adjustment Amount")
 					.setStyle(TextInputStyle.Short)
 					.setPlaceholder(
-						"+3.50 to add, -10.00 to reduce"
+						"ex: 5.00 to add $5 to debt, -5.00 to remove $5 from their debt"
 					)
 					.setRequired(true)
 					.setMaxLength(10);
@@ -336,19 +336,6 @@ export default {
 						return await safeInteractionResponse(
 							modalSubmission,
 							"Please enter a valid adjustment amount (positive to add, negative to reduce).",
-							true
-						);
-					}
-
-					// For negative adjustments (payments), ensure it doesn't reduce below 0
-					if (adjustmentAmount < 0 && Math.abs(adjustmentAmount) > selectedTransaction.amount) {
-						return await safeInteractionResponse(
-							modalSubmission,
-							`Reduction amount ($${formatNumber(
-								Math.abs(adjustmentAmount)
-							)}) cannot exceed the debt amount ($${formatNumber(
-								selectedTransaction.amount
-							)}).`,
 							true
 						);
 					}
@@ -404,8 +391,12 @@ export default {
 						const wasFullyPaid = updatedTransaction.isSettled;
 						const remainingAmount = updatedTransaction.amount;
 						const isIncrease = adjustmentAmount > 0;
-						const adjustmentType = isIncrease ? "increased" : "reduced";
-						const adjustmentDescription = isIncrease ? "added charge" : "payment";
+						const adjustmentType = isIncrease
+							? "increased"
+							: "reduced";
+						const adjustmentDescription = isIncrease
+							? "added charge"
+							: "payment";
 
 						await safeInteractionResponse(
 							modalSubmission,
