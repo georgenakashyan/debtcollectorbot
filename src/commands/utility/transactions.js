@@ -14,7 +14,7 @@ import {
 import { ObjectId } from "mongodb";
 import { getAllUnsettledTransactionsFromSomeone } from "../../db/dbQueries.js";
 import {
-	partiallySettleTransaction,
+	adjustTransactionAmount,
 	settleTransaction,
 } from "../../db/dbUpdates.js";
 import { formatNumber } from "../../utils/utils.js";
@@ -119,8 +119,8 @@ function buildActionRows(
 		// Action buttons row
 		const actionRow = new ActionRowBuilder().addComponents(
 			new ButtonBuilder()
-				.setCustomId("partial_pay_selected")
-				.setLabel("Partial Payment")
+				.setCustomId("adjust_debt_selected")
+				.setLabel("Adjust Debt")
 				.setStyle(ButtonStyle.Primary)
 				.setDisabled(!buttonsEnabled),
 			new ButtonBuilder()
@@ -267,10 +267,10 @@ export default {
 			) {
 				page++;
 				selectedTransactionId = null;
-			} else if (componentInt.customId === "partial_pay_selected") {
+			} else if (componentInt.customId === "adjust_debt_selected") {
 				if (!selectedTransactionId) {
 					console.error(
-						"ERROR: No transaction selected for partial payment"
+						"ERROR: No transaction selected for debt adjustment"
 					);
 					return componentInt.reply({
 						content: "Please select a transaction first.",
@@ -292,17 +292,17 @@ export default {
 					});
 				}
 
-				// Create partial payment modal
+				// Create debt adjustment modal
 				const modal = new ModalBuilder()
-					.setCustomId(`partial_payment_${selectedTransactionId}`)
-					.setTitle("Partial Payment");
+					.setCustomId(`debt_adjustment_${selectedTransactionId}`)
+					.setTitle("Debt Adjustment");
 
 				const amountInput = new TextInputBuilder()
-					.setCustomId("payment_amount")
-					.setLabel("Payment Amount")
+					.setCustomId("adjustment_amount")
+					.setLabel("Adjustment Amount")
 					.setStyle(TextInputStyle.Short)
 					.setPlaceholder(
-						`Max: $${formatNumber(selectedTransaction.amount)}`
+						"+3.50 to add, -10.00 to reduce"
 					)
 					.setRequired(true)
 					.setMaxLength(10);
@@ -320,31 +320,32 @@ export default {
 						{
 							filter: (i) =>
 								i.customId ===
-									`partial_payment_${selectedTransactionId}` &&
+									`debt_adjustment_${selectedTransactionId}` &&
 								i.user.id === interaction.user.id,
 							time: 60_000, // 60 seconds timeout
 						}
 					);
 
-					const paymentAmount = parseFloat(
+					const adjustmentAmount = parseFloat(
 						modalSubmission.fields.getTextInputValue(
-							"payment_amount"
+							"adjustment_amount"
 						)
 					);
 
-					if (isNaN(paymentAmount) || paymentAmount <= 0) {
+					if (isNaN(adjustmentAmount) || adjustmentAmount === 0) {
 						return await safeInteractionResponse(
 							modalSubmission,
-							"Please enter a valid payment amount.",
+							"Please enter a valid adjustment amount (positive to add, negative to reduce).",
 							true
 						);
 					}
 
-					if (paymentAmount > selectedTransaction.amount) {
+					// For negative adjustments (payments), ensure it doesn't reduce below 0
+					if (adjustmentAmount < 0 && Math.abs(adjustmentAmount) > selectedTransaction.amount) {
 						return await safeInteractionResponse(
 							modalSubmission,
-							`Payment amount ($${formatNumber(
-								paymentAmount
+							`Reduction amount ($${formatNumber(
+								Math.abs(adjustmentAmount)
 							)}) cannot exceed the debt amount ($${formatNumber(
 								selectedTransaction.amount
 							)}).`,
@@ -354,10 +355,10 @@ export default {
 
 					try {
 						const updatedTransaction =
-							await partiallySettleTransaction(
+							await adjustTransactionAmount(
 								userId,
 								new ObjectId(selectedTransactionId),
-								paymentAmount
+								adjustmentAmount
 							);
 
 						if (!updatedTransaction) {
@@ -383,7 +384,7 @@ export default {
 						if (allTransactions.length === 0) {
 							await safeInteractionResponse(
 								modalSubmission,
-								`✅ Payment processed! <@${debtorId}> has paid off all their debts to <@${userId}>.`,
+								`✅ Adjustment processed! <@${debtorId}> has paid off all their debts to <@${userId}>.`,
 								true
 							);
 							collector.stop();
@@ -402,17 +403,20 @@ export default {
 
 						const wasFullyPaid = updatedTransaction.isSettled;
 						const remainingAmount = updatedTransaction.amount;
+						const isIncrease = adjustmentAmount > 0;
+						const adjustmentType = isIncrease ? "increased" : "reduced";
+						const adjustmentDescription = isIncrease ? "added charge" : "payment";
 
 						await safeInteractionResponse(
 							modalSubmission,
 							wasFullyPaid
-								? `✅ Payment processed! <@${debtorId}> paid $${formatNumber(
-										paymentAmount
+								? `✅ Adjustment processed! <@${debtorId}> paid $${formatNumber(
+										Math.abs(adjustmentAmount)
 								  )} and fully settled the debt.`
-								: `✅ Partial payment processed! <@${debtorId}> paid $${formatNumber(
-										paymentAmount
-								  )}. Remaining balance: $${formatNumber(
-										remainingAmount.toFixed(2)
+								: `✅ Debt ${adjustmentType}! <@${debtorId}>'s debt ${adjustmentType} by $${formatNumber(
+										Math.abs(adjustmentAmount)
+								  )} (${adjustmentDescription}). New balance: $${formatNumber(
+										remainingAmount
 								  )}.`,
 							true
 						);
@@ -452,12 +456,12 @@ export default {
 						}
 					} catch (error) {
 						console.error(
-							"ERROR processing partial payment:",
+							"ERROR processing debt adjustment:",
 							error
 						);
 						await safeInteractionResponse(
 							modalSubmission,
-							"An error occurred while processing the payment.",
+							"An error occurred while processing the adjustment.",
 							true
 						);
 					}

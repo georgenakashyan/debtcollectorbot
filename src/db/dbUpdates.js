@@ -35,15 +35,15 @@ export const settleTransaction = async (userId, transactionId) => {
 	return result;
 };
 
-export const partiallySettleTransaction = async (
+export const adjustTransactionAmount = async (
 	userId,
 	transactionId,
-	amount
+	adjustmentAmount
 ) => {
 	const db = getDB();
 	const result = await db.debts.findOneAndUpdate(
 		{ _id: transactionId, creditorId: userId },
-		{ $inc: { amount: -1 * amount } },
+		{ $inc: { amount: adjustmentAmount } },
 		{ returnDocument: "after" }
 	);
 
@@ -65,6 +65,16 @@ export const partiallySettleTransaction = async (
 	}
 
 	return result;
+};
+
+// Keep the old function name for backward compatibility
+export const partiallySettleTransaction = async (
+	userId,
+	transactionId,
+	amount
+) => {
+	// Convert positive payment amounts to negative adjustments
+	return await adjustTransactionAmount(userId, transactionId, -1 * amount);
 };
 
 export const deleteTransaction = async (userId, transactionId) => {
