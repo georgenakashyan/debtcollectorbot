@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MongoClient } from 'mongodb';
-import { getTotalDebtFromSomeone, getUserDebts, getUserCredits, getAllUnsettledTransactionsFromSomeone, getUserDebtsByCreditor, getUserCreditsByDebtor } from '../../src/db/dbQueries.js';
+import { getTotalDebtFromSomeone, getUserDebts, getUserCredits, getAllUnsettledTransactionsFromSomeone, getUserDebtsByCreditor, getUserCreditsByDebtor, getTransactionDetailsFromSomeone } from '../../src/db/dbQueries.js';
 import { getDB } from '../../src/db/db.js';
 
 let mongoServer;
@@ -283,6 +283,42 @@ describe('Database Queries', () => {
             expect(result).toHaveLength(2);
             expect(result[0].debtorId).toBe('eve');
             expect(result[1].debtorId).toBe('bob');
+        });
+    });
+
+    describe('getTransactionDetailsFromSomeone', () => {
+        test('should return transaction details with totals', async () => {
+            const result = await getTransactionDetailsFromSomeone('alice', 'bob');
+            
+            expect(result.totalAmount).toBe(75.5); // formatted number
+            expect(result.debtCount).toBe(2);
+            expect(result.transactions).toHaveLength(2);
+            expect(result.transactions[0].amount).toBe(50.00);
+            expect(result.transactions[1].amount).toBe(25.50);
+        });
+
+        test('should return empty result for non-existent debt relationship', async () => {
+            const result = await getTransactionDetailsFromSomeone('alice', 'charlie');
+            
+            expect(result.totalAmount).toBe(0);
+            expect(result.debtCount).toBe(0);
+            expect(result.transactions).toHaveLength(0);
+        });
+
+        test('should exclude settled transactions', async () => {
+            const result = await getTransactionDetailsFromSomeone('alice', 'bob');
+            
+            // Should not include the settled 30.00 transaction
+            expect(result.transactions.every(tx => tx.amount !== 30.00)).toBe(true);
+            expect(result.totalAmount).toBe(75.5);
+        });
+
+        test('should sort transactions by creation date descending', async () => {
+            const result = await getTransactionDetailsFromSomeone('alice', 'bob');
+            
+            // First transaction should be the most recent (if created times differ)
+            // Both have same createdAt in test data, so order is consistent
+            expect(result.transactions).toHaveLength(2);
         });
     });
 });

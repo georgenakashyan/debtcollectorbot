@@ -1,6 +1,6 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
-import { getTotalDebtFromSomeone } from "../../db/dbQueries.js";
-import { pluralize } from "../../utils/utils.js";
+import { getTransactionDetailsFromSomeone } from "../../db/dbQueries.js";
+import { pluralize, formatNumber } from "../../utils/utils.js";
 
 export default {
 	data: new SlashCommandBuilder()
@@ -23,17 +23,37 @@ export default {
 			});
 		}
 
-		const debt = await getTotalDebtFromSomeone(creditorId, userId);
+		const debtDetails = await getTransactionDetailsFromSomeone(creditorId, userId);
+
+		if (debtDetails.debtCount === 0) {
+			return await interaction.reply({
+				content: `You don't owe <@${creditorId}> anything!`,
+				flags: MessageFlags.Ephemeral,
+			});
+		}
+
+		// Build transaction list
+		let transactionList = debtDetails.transactions.map(tx => {
+			const date = new Date(tx.createdAt).toLocaleDateString();
+			const description = tx.description || "*No description*";
+			const amount = (tx.amount || 0).toFixed(2);
+			return `• $${amount} - ${description} (${date})`;
+		}).join('\n');
+
+		// Keep message under Discord's 2000 character limit
+		const totalAmount = (debtDetails.totalAmount || 0).toFixed(2);
+		const headerText = `You owe <@${creditorId}> $${totalAmount} ${pluralize(`from ${debtDetails.debtCount} transaction`, debtDetails.debtCount)}:\n\n`;
+		const maxListLength = 2000 - headerText.length - 50; // buffer for safety
+
+		if (transactionList.length > maxListLength) {
+			// Truncate and add continuation message
+			const truncatedList = transactionList.substring(0, maxListLength);
+			const lastNewlineIndex = truncatedList.lastIndexOf('\n');
+			transactionList = truncatedList.substring(0, lastNewlineIndex) + '\n\n*...and more transactions*';
+		}
 
 		await interaction.reply({
-			content: `You owe <@${creditorId}> $${debt.totalAmount} ${
-				debt.debtCount > 0
-					? pluralize(
-							`from ${debt.debtCount} transaction`,
-							debt.debtCount
-					  )
-					: ""
-			}`,
+			content: headerText + transactionList,
 			flags: MessageFlags.Ephemeral,
 		});
 	},

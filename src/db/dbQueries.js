@@ -244,6 +244,33 @@ export async function getUserCreditsByDebtor(guildId, userId) {
 }
 
 /**
+ * Get detailed transaction information between two users.
+ *
+ * @param {string} creditorId - The ID of the creditor.
+ * @param {string} debtorId - The ID of the debtor.
+ * @returns {Object} An object containing the total debt, debt count, and transaction details.
+ */
+export async function getTransactionDetailsFromSomeone(creditorId, debtorId) {
+	const db = getDB();
+	
+	// Get all unsettled transactions
+	const transactions = await db.debts
+		.find({ creditorId: creditorId, debtorId: debtorId, isSettled: false })
+		.sort({ createdAt: -1 }) // Most recent first
+		.toArray();
+	
+	// Calculate totals
+	const totalAmount = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+	const debtCount = transactions.length;
+	
+	return {
+		totalAmount: formatNumber(totalAmount),
+		debtCount,
+		transactions: transactions || []
+	};
+}
+
+/**
  * Get all unsettled debts for a specific user (what they owe to others).
  *
  * @param {string} creditorId - The ID of the creditor.
